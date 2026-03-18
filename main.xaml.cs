@@ -56,7 +56,6 @@ public partial class main : ContentPage
         topButtons.Children.Add(btnStats);
         topButtons.Children.Add(btnRules);
 
-        // --- ЛЕЙБЛ "ЧЕЙ ХОД" ---
         _lblCurrentPlayer = new Label
         {
             Text = "Käib: X",
@@ -66,10 +65,8 @@ public partial class main : ContentPage
             HorizontalOptions = LayoutOptions.Center
         };
 
-        // --- СТРОИМ ИГРОВУЮ СЕТКУ 3x3 ---
         var gameGrid = BuildGrid();
 
-        // --- КНОПКИ ВНИЗУ ---
         var btnNewGame = new Button
         {
             Text = "🔄  Uus mäng",
@@ -96,7 +93,6 @@ public partial class main : ContentPage
         };
         btnRandomStart.Clicked += OnRandomStartClicked;
 
-        // --- КНОПКА ПЕРЕКЛЮЧЕНИЯ РЕЖИМА ---
         var btnToggleBot = new Button
         {
             Text = "🤖  vs Bot",
@@ -177,7 +173,6 @@ public partial class main : ContentPage
         var btn = (Button)sender!;
         int index = (int)btn.CommandParameter;
 
-        // В режиме бота — принимаем ход только от игрока (X)
         if (_isBotMode && _game.CurrentPlayer != PlayerSymbol)
             return;
 
