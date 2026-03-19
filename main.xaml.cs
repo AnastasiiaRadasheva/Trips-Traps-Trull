@@ -7,10 +7,8 @@ public partial class main : ContentPage
     private readonly Button[] _cells = new Button[9];
     private Label _lblCurrentPlayer;
 
-    // Флаг — играем против бота или против человека
     private bool _isBotMode = false;
 
-    // Игрок всегда X, бот всегда O
     private const string PlayerSymbol = "X";
     private const string BotSymbol = "O";
 
@@ -19,7 +17,6 @@ public partial class main : ContentPage
         BackgroundColor = Color.FromArgb("#1a1a2e");
         Title = "Trips-Traps-Trull";
 
-        // --- МАЛЕНЬКИЕ КНОПКИ ВВЕРХУ ---
         var btnStats = new Button
         {
             Text = "📊",
@@ -160,7 +157,6 @@ public partial class main : ContentPage
                 CommandParameter = i
             };
             btn.Clicked += OnCellClicked;
-
             _cells[i] = btn;
             grid.Add(btn, i % 3, i / 3);
         }
@@ -179,14 +175,11 @@ public partial class main : ContentPage
         if (!_game.MakeMove(index))
             return;
 
-        // Показываем символ на кнопке
         SetButtonSymbol(btn, _game.CurrentPlayer);
 
-        // Если режим бота — записываем ход игрока в память бота
         if (_isBotMode)
             _bot.RecordPlayerMove(index);
 
-        // Проверяем результат
         string? result = _game.CheckResult();
         if (result != null)
         {
@@ -197,26 +190,21 @@ public partial class main : ContentPage
         _game.SwitchPlayer();
         _lblCurrentPlayer.Text = $"Käib: {_game.CurrentPlayer}";
 
-        // Если режим бота и сейчас ход бота — делаем ход бота
         if (_isBotMode && _game.CurrentPlayer == BotSymbol)
             await MakeBotMove();
     }
 
     private async Task MakeBotMove()
     {
-        // Небольшая задержка чтобы ход бота не был мгновенным
         await Task.Delay(400);
 
-        // Бот выбирает лучший ход
         int botIndex = _bot.GetBestMove(_game.Board, BotSymbol);
 
         if (botIndex == -1 || !_game.MakeMove(botIndex))
             return;
 
-        // Показываем символ бота на кнопке
         SetButtonSymbol(_cells[botIndex], BotSymbol);
 
-        // Проверяем результат после хода бота
         string? result = _game.CheckResult();
         if (result != null)
         {
@@ -228,13 +216,12 @@ public partial class main : ContentPage
         _lblCurrentPlayer.Text = $"Käib: {_game.CurrentPlayer}";
     }
 
-    // Устанавливаем текст и цвет символа на кнопке
     private void SetButtonSymbol(Button btn, string symbol)
     {
         btn.Text = symbol;
         btn.TextColor = symbol == "X"
-            ? Color.FromArgb("#e94560")  // X — красный
-            : Color.FromArgb("#0f9b58"); // O — зелёный
+            ? Color.FromArgb("#e94560")
+            : Color.FromArgb("#0f9b58");
     }
 
     private async Task HandleResult(string result)
@@ -244,11 +231,11 @@ public partial class main : ContentPage
         if (result == "Draw")
         {
             message = "Viik! 🤝";
+            // Ничья — сохраняем в нужный раздел в зависимости от режима
             SaveStats("draw");
         }
         else if (_isBotMode)
         {
-            // В режиме бота показываем кто победил — игрок или бот
             message = result == PlayerSymbol
                 ? "Sa võitsid boti! 🎉"
                 : "Bot võitis! 🤖";
@@ -263,7 +250,7 @@ public partial class main : ContentPage
         if (_isBotMode)
             _bot.RecordGameFinished();
 
-        bool playAgain = await DisplayAlert("Mäng läbi!", message, "Uus mäng", "Välju");
+        bool playAgain = await DisplayAlertAsync("Mäng läbi!", message, "Uus mäng", "Välju");
 
         if (playAgain)
             ResetBoard();
@@ -280,25 +267,22 @@ public partial class main : ContentPage
     {
         string starter = _game.RandomStartPlayer();
         ResetBoard(starter);
-        await DisplayAlert("🎲 Loosimine!", $"Alustab mängija {starter}!", "OK");
+        await DisplayAlertAsync("🎲 Loosimine!", $"Alustab mängija {starter}!", "OK");
     }
 
     private async void OnToggleBotClicked(object? sender, EventArgs e)
     {
-        // Переключаем режим
         _isBotMode = !_isBotMode;
 
         var btn = (Button)sender!;
         if (_isBotMode)
         {
-            // Включаем бота — подсвечиваем кнопку
             btn.BackgroundColor = Color.FromArgb("#e94560");
             btn.Text = "🤖  vs Bot ON";
-            await DisplayAlert("🤖 Bot", "Bot on sisse lülitatud! Sina mängid X-ga.", "OK");
+            await DisplayAlertAsync("🤖 Bot", "Bot on sisse lülitatud! Sina mängid X-ga.", "OK");
         }
         else
         {
-            // Выключаем бота
             btn.BackgroundColor = Color.FromArgb("#16213e");
             btn.Text = "🤖  vs Bot";
         }
@@ -331,11 +315,17 @@ public partial class main : ContentPage
 
     private void SaveStats(string winner)
     {
+        // Определяем суффикс в зависимости от режима
+        // "pvp" = два игрока, "bot" = против бота
+        string suffix = _isBotMode ? "bot" : "pvp";
+
+        // Сохраняем в нужную "папку" через суффикс в ключе
+        // Например: "wins_x_pvp" или "wins_x_bot"
         if (winner == "x")
-            Preferences.Set("wins_x", Preferences.Get("wins_x", 0) + 1);
+            Preferences.Set($"wins_x_{suffix}", Preferences.Get($"wins_x_{suffix}", 0) + 1);
         else if (winner == "o")
-            Preferences.Set("wins_o", Preferences.Get("wins_o", 0) + 1);
+            Preferences.Set($"wins_o_{suffix}", Preferences.Get($"wins_o_{suffix}", 0) + 1);
         else
-            Preferences.Set("draws", Preferences.Get("draws", 0) + 1);
+            Preferences.Set($"draws_{suffix}", Preferences.Get($"draws_{suffix}", 0) + 1);
     }
 }
