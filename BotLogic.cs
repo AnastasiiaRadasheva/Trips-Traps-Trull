@@ -6,13 +6,11 @@ public class BotLogic
 
     public int ManualDifficulty { get; set; } = -1;
 
+    // Частота ходов игрока по клетке
     private int[] _playerMoveFrequency = new int[9];
-    private int[][] _playerMoveByTurn = new int[9][];
 
-    // История последних игр: список ходов игрока в каждой игре
-    private List<int[]> _lostGamePatterns = new List<int[]>();
-    private List<int> _currentGameMoves = new List<int>();
-    private const int MaxPatterns = 10;
+    // Частота ходов игрока по порядковому номеру хода (1-й ход, 2-й ход, ...)
+    private int[][] _playerMoveByTurn = new int[9][];
 
     private readonly Random _random = new Random();
 
@@ -54,17 +52,12 @@ public class BotLogic
                 return blockMove;
         }
 
-        // 3. Анализ паттернов прошлых проигрышей — приоритет на мастере
-        int patternMove = GetAntiPatternMove(board, playerSymbol);
-        if (patternMove != -1)
-            return patternMove;
-
-        // 4. Тактическое предупреждение по памяти
+        // 3. На высоком уровне — тактическое предупреждение по памяти
         int tacticalMove = GetTacticalCounterMove(board, playerSymbol);
         if (tacticalMove != -1)
             return tacticalMove;
 
-        // 5. Центр (с вероятностью по уровню)
+        // 4. Центр (с вероятностью по уровню)
         if (string.IsNullOrEmpty(board[4]))
         {
             double centerChance = GetCenterChance();
@@ -72,106 +65,31 @@ public class BotLogic
                 return 4;
         }
 
-        // 6. Ход по памяти частот
+        // 5. Ход по памяти (старая логика)
         int memoryMove = GetMoveFromMemory(board);
-        if memoryMove != -1)
+        if (memoryMove != -1)
             return memoryMove;
 
         return GetRandomMove(board);
     }
 
     /// <summary>
-    /// Анализирует паттерны игр где бот проиграл.
-    /// Если текущая игра похожа на проигранную — ищет другой ход.
+    /// Тактическое противодействие: бот анализирует текущую позицию игрока
+    /// и предсказывает его следующий ход, занимая опасную клетку заранее.
     /// </summary>
-    private int GetAntiPatternMove(string[] board, string playerSymbol)
-    {
-        if (_lostGamePatterns.Count == 0)
-            return -1;
-
-        // Смотрим только последние 3+ игры (или сколько есть)
-        int lookback = Math.Min(_lostGamePatterns.Count, Math.Max(3, _lostGamePatterns.Count));
-        int playerMovesNow = _currentGameMoves.Count;
-
-        if (playerMovesNow == 0)
-            return -1;
-
-        // Находим паттерны похожие на текущую игру
-        var matchingPatterns = new List<int[]>();
-
-        foreach (var pattern in _lostGamePatterns.TakeLast(lookback))
-        {
-            if (pattern.Length <= playerMovesNow)
-                continue;
-
-            // Проверяем совпадение первых N ходов
-            bool matches = true;
-            for (int i = 0; i < playerMovesNow; i++)
-            {
-                if (i >= pattern.Length || pattern[i] != _currentGameMoves[i])
-                {
-                    matches = false;
-                    break;
-                }
-            }
-
-            if (matches)
-                matchingPatterns.Add(pattern);
-        }
-
-        if (matchingPatterns.Count == 0)
-            return -1;
-
-        // Собираем "опасные" следующие ходы из паттернов
-        var dangerousCells = new Dictionary<int, int>(); // клетка -> сколько раз встречается
-        foreach (var pattern in matchingPatterns)
-        {
-            if (playerMovesNow < pattern.Length)
-            {
-                int nextCell = pattern[playerMovesNow];
-                if (string.IsNullOrEmpty(board[nextCell]))
-                {
-                    dangerousCells.TryGetValue(nextCell, out int cnt);
-                    dangerousCells[nextCell] = cnt + 1;
-                }
-            }
-        }
-
-        if (dangerousCells.Count == 0)
-            return -1;
-
-        // Самая опасная клетка — занимаем её
-        int bestCell = dangerousCells.OrderByDescending(x => x.Value).First().Key;
-
-        // На высоком уровне — всегда блокируем, на низком — иногда пропускаем
-        double useChance = GetPatternUseChance();
-        if (_random.NextDouble() < useChance)
-            return bestCell;
-
-        return -1;
-    }
-
-    private double GetPatternUseChance()
-    {
-        int level = ManualDifficulty >= 0 ? ManualDifficulty * 3 : _gamesPlayed;
-        if (level <= 3) return 0.0;   // Новичок — не использует
-        if (level <= 6) return 0.4;   // Средний — иногда
-        if (level <= 10) return 0.75; // Опытный — часто
-        return 1.0;                   // Мастер — всегда
-    }
-
     private int GetTacticalCounterMove(string[] board, string playerSymbol)
     {
         double memoryWeight = GetMemoryWeight();
         if (memoryWeight <= 0)
             return -1;
 
-        int playerTurn = CountSymbols(board, playerSymbol);
-        int nextTurn = playerTurn;
+        int playerTurn = CountSymbols(board, playerSymbol); // сколько ходов уже сделал игрок
+        int nextTurn = playerTurn; // индекс следующего хода игрока (0-based)
 
         if (nextTurn >= 9)
             return -1;
 
+        // Оцениваем каждую свободную клетку
         var freeCells = new List<int>();
         for (int i = 0; i < 9; i++)
             if (string.IsNullOrEmpty(board[i]))
@@ -180,15 +98,27 @@ public class BotLogic
         if (freeCells.Count == 0)
             return -1;
 
+        // Считаем угрозу для каждой свободной клетки:
+        // угроза = (частота хода игрока на эту клетку вообще) 
+        //        + (частота хода на эту клетку именно на этом номере хода)
+        //        + бонус если клетка участвует в незаблокированной вилке игрока
         int bestCell = -1;
         double bestScore = -1;
 
         foreach (int cell in freeCells)
         {
             double score = 0;
+
+            // Общая частота
             score += _playerMoveFrequency[cell] * 1.0;
+
+            // Частота на конкретном номере хода (весомее — игрок часто начинает одинаково)
             score += _playerMoveByTurn[nextTurn][cell] * 2.0;
+
+            // Бонус: клетка участвует в потенциальной вилке игрока
             score += CountForkPotential(board, playerSymbol, cell) * 3.0;
+
+            // Масштабируем по уровню
             score *= memoryWeight;
 
             if (score > bestScore)
@@ -198,6 +128,7 @@ public class BotLogic
             }
         }
 
+        // Применяем порог — на низком уровне игнорируем слабые сигналы
         double threshold = GetMemoryThreshold();
         if (bestScore >= threshold)
             return bestCell;
@@ -205,6 +136,10 @@ public class BotLogic
         return -1;
     }
 
+    /// <summary>
+    /// Сколько линий выигрыша проходит через данную клетку, где игрок уже стоит
+    /// хотя бы в одной другой клетке линии, а бот не стоит ни в одной.
+    /// </summary>
     private int CountForkPotential(string[] board, string playerSymbol, int cell)
     {
         string botSymbol = playerSymbol == "X" ? "O" : "X";
@@ -238,6 +173,7 @@ public class BotLogic
         return count;
     }
 
+    // Насколько бот доверяет памяти (0 = игнорирует, 1 = полностью доверяет)
     private double GetMemoryWeight()
     {
         int level = ManualDifficulty >= 0 ? ManualDifficulty * 3 : _gamesPlayed;
@@ -247,12 +183,13 @@ public class BotLogic
         return 1.0;
     }
 
+    // Минимальный счёт угрозы, при котором бот реагирует
     private double GetMemoryThreshold()
     {
         int level = ManualDifficulty >= 0 ? ManualDifficulty * 3 : _gamesPlayed;
         if (level <= 6) return 4.0;
         if (level <= 10) return 2.0;
-        return 1.0;
+        return 1.0; // на высоком уровне реагирует даже на слабые сигналы
     }
 
     private double GetIgnoreChance()
@@ -272,10 +209,10 @@ public class BotLogic
         return 1.0;
     }
 
+    // Вызывать при каждом ходе игрока, передавая номер хода (0-based)
     public void RecordPlayerMove(int index, int turnNumber = -1)
     {
         _playerMoveFrequency[index]++;
-        _currentGameMoves.Add(index);
 
         if (turnNumber >= 0 && turnNumber < 9)
             _playerMoveByTurn[turnNumber][index]++;
@@ -283,26 +220,10 @@ public class BotLogic
         SaveMemory();
     }
 
-    /// <summary>
-    /// Вызывать в конце игры с результатом: true = бот проиграл
-    /// </summary>
-    public void RecordGameFinished(bool botLost = false)
+    public void RecordGameFinished()
     {
         _gamesPlayed++;
         Preferences.Set("bot_games_played", _gamesPlayed);
-
-        if (botLost && _currentGameMoves.Count >= 2)
-        {
-            _lostGamePatterns.Add(_currentGameMoves.ToArray());
-
-            // Храним только последние MaxPatterns
-            if (_lostGamePatterns.Count > MaxPatterns)
-                _lostGamePatterns.RemoveAt(0);
-
-            SavePatterns();
-        }
-
-        _currentGameMoves.Clear();
     }
 
     public int GamesPlayed => _gamesPlayed;
@@ -374,18 +295,6 @@ public class BotLogic
         }
     }
 
-    private void SavePatterns()
-    {
-        Preferences.Set("bot_pattern_count", _lostGamePatterns.Count);
-        for (int p = 0; p < _lostGamePatterns.Count; p++)
-        {
-            var pattern = _lostGamePatterns[p];
-            Preferences.Set($"bot_pattern_{p}_len", pattern.Length);
-            for (int m = 0; m < pattern.Length; m++)
-                Preferences.Set($"bot_pattern_{p}_{m}", pattern[m]);
-        }
-    }
-
     public void ReloadMemory() => LoadMemory();
 
     private void LoadMemory()
@@ -396,20 +305,7 @@ public class BotLogic
             for (int t = 0; t < 9; t++)
                 _playerMoveByTurn[t][i] = Preferences.Get($"bot_memory_turn_{t}_{i}", 0);
         }
-
         _gamesPlayed = Preferences.Get("bot_games_played", 0);
-
-        // Загружаем паттерны проигрышей
-        _lostGamePatterns.Clear();
-        int patternCount = Preferences.Get("bot_pattern_count", 0);
-        for (int p = 0; p < patternCount; p++)
-        {
-            int len = Preferences.Get($"bot_pattern_{p}_len", 0);
-            var pattern = new int[len];
-            for (int m = 0; m < len; m++)
-                pattern[m] = Preferences.Get($"bot_pattern_{p}_{m}", 0);
-            _lostGamePatterns.Add(pattern);
-        }
     }
 
     public void ResetMemory()
@@ -424,19 +320,6 @@ public class BotLogic
                 Preferences.Remove($"bot_memory_turn_{t}_{i}");
             }
         }
-
-        int patternCount = Preferences.Get("bot_pattern_count", 0);
-        for (int p = 0; p < patternCount; p++)
-        {
-            int len = Preferences.Get($"bot_pattern_{p}_len", 0);
-            for (int m = 0; m < len; m++)
-                Preferences.Remove($"bot_pattern_{p}_{m}");
-            Preferences.Remove($"bot_pattern_{p}_len");
-        }
-        Preferences.Remove("bot_pattern_count");
-
-        _lostGamePatterns.Clear();
-        _currentGameMoves.Clear();
         _gamesPlayed = 0;
         Preferences.Remove("bot_games_played");
     }
