@@ -66,7 +66,7 @@ public partial class RulesPage : ContentPage
                 Children =
                 {
                     new Label { Text = "▶️ Kuidas alustada", FontSize = 18, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#e94560") },
-                    new Label { Text = "Vajuta nuppu '🤖 vs Bot' — see lülitab boti sisse. Nupp muutub punaseks.", FontSize = 15, TextColor = Colors.White },
+                    new Label { Text = "Vajuta nuppu 'Sina vs Bot' — see lülitab boti sisse. Nupp muutub punaseks.", FontSize = 15, TextColor = Colors.White },
                     new Label { Text = "Sina mängid alati X-ga, bot mängib O-ga.", FontSize = 15, TextColor = Colors.White },
 
 

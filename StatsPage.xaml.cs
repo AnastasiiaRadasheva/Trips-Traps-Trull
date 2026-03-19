@@ -4,17 +4,14 @@ namespace TTT;
 
 public partial class StatsPage : ContentPage
 {
-    // Лейблы для статистики двух игроков
     private Label _lblWinsXPvp;
     private Label _lblWinsOPvp;
     private Label _lblDrawsPvp;
 
-    // Лейблы для статистики против бота
     private Label _lblWinsXBot;
     private Label _lblWinsOBot;
     private Label _lblDrawsBot;
 
-    // Лейбл уровня бота
     private Label _lblBotGames;
 
     public StatsPage()
@@ -24,17 +21,16 @@ public partial class StatsPage : ContentPage
 
         var title = new Label
         {
-            Text = "📊 Statistika",
+            Text = " Statistika",
             FontSize = 30,
             FontAttributes = FontAttributes.Bold,
             TextColor = Colors.White,
             HorizontalOptions = LayoutOptions.Center
         };
 
-        // --- БЛОК: ДВА ИГРОКА ---
         var pvpTitle = new Label
         {
-            Text = "👥 Mängija vs Mängija",
+            Text = "Mängija vs Mängija",
             FontSize = 18,
             FontAttributes = FontAttributes.Bold,
             TextColor = Colors.White,
@@ -75,10 +71,9 @@ public partial class StatsPage : ContentPage
             }
         };
 
-        // --- БЛОК: ПРОТИВ БОТА ---
         var botStatsTitle = new Label
         {
-            Text = "🤖 Mängija vs Bot",
+            Text = "Mängija vs Bot",
             FontSize = 18,
             FontAttributes = FontAttributes.Bold,
             TextColor = Colors.White,
@@ -119,10 +114,9 @@ public partial class StatsPage : ContentPage
             }
         };
 
-        // --- БЛОК: УРОВЕНЬ БОТА ---
         var botLevelTitle = new Label
         {
-            Text = "🤖 Boti tase",
+            Text = "Boti tase",
             FontSize = 18,
             FontAttributes = FontAttributes.Bold,
             TextColor = Colors.White,
@@ -149,12 +143,9 @@ public partial class StatsPage : ContentPage
             }
         };
 
-        // --- КНОПКИ СБРОСА ---
-
-        // Сбрасывает только статистику побед — бот не трогается
         var btnResetStats = new Button
         {
-            Text = "🗑️  Lähtesta statistika",
+            Text = " Lähtesta statistika",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -165,10 +156,9 @@ public partial class StatsPage : ContentPage
         };
         btnResetStats.Clicked += OnResetStatsClicked;
 
-        // Сбрасывает только память и уровень бота — статистика не трогается
         var btnResetBot = new Button
         {
-            Text = "🔄  Lähtesta boti tase",
+            Text = "  Lähtesta boti tase",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -190,7 +180,6 @@ public partial class StatsPage : ContentPage
         };
         btnBack.Clicked += OnBackClicked;
 
-        // ScrollView — чтобы всё влезло на маленький экран
         Content = new ScrollView
         {
             Content = new VerticalStackLayout
@@ -209,7 +198,6 @@ public partial class StatsPage : ContentPage
         };
     }
 
-    // Обновляем все данные каждый раз когда открываем страницу
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -218,22 +206,18 @@ public partial class StatsPage : ContentPage
 
     private void LoadStats()
     {
-        // Статистика двух игроков — ключи с суффиксом "_pvp"
         _lblWinsXPvp.Text = $"X võitis: {Preferences.Get("wins_x_pvp", 0)}";
         _lblWinsOPvp.Text = $"O võitis: {Preferences.Get("wins_o_pvp", 0)}";
         _lblDrawsPvp.Text = $"Viik: {Preferences.Get("draws_pvp", 0)}";
 
-        // Статистика против бота — ключи с суффиксом "_bot"
         _lblWinsXBot.Text = $"Mängija võitis: {Preferences.Get("wins_x_bot", 0)}";
         _lblWinsOBot.Text = $"Bot võitis: {Preferences.Get("wins_o_bot", 0)}";
         _lblDrawsBot.Text = $"Viik: {Preferences.Get("draws_bot", 0)}";
 
-        // Уровень бота
         int gamesWithBot = Preferences.Get("bot_games_played", 0);
         _lblBotGames.Text = $"Mängud botiga: {gamesWithBot}\n{GetBotLevelText(gamesWithBot)}";
     }
 
-    // Переводим число игр в понятный текст уровня
     private string GetBotLevelText(int games)
     {
         if (games <= 2) return "Tase: Algaja 🟢";
@@ -242,14 +226,12 @@ public partial class StatsPage : ContentPage
         return "Tase: Meister 🔴";
     }
 
-    // Сбрасываем только статистику побед (pvp и bot отдельно)
     private async void OnResetStatsClicked(object? sender, EventArgs e)
     {
         bool confirm = await DisplayAlertAsync("Kinnita", "Kas soovid statistika lähtestada?", "Jah", "Ei");
 
         if (confirm)
         {
-            // Удаляем все 6 ключей статистики
             Preferences.Remove("wins_x_pvp");
             Preferences.Remove("wins_o_pvp");
             Preferences.Remove("draws_pvp");
@@ -260,7 +242,6 @@ public partial class StatsPage : ContentPage
         }
     }
 
-    // Сбрасываем только память и уровень бота
     private async void OnResetBotClicked(object? sender, EventArgs e)
     {
         bool confirm = await DisplayAlertAsync(

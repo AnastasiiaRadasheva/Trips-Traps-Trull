@@ -66,7 +66,7 @@ public partial class main : ContentPage
 
         var btnNewGame = new Button
         {
-            Text = "🔄  Uus mäng",
+            Text = " Uus mäng",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#e94560"),
             TextColor = Colors.White,
@@ -78,7 +78,7 @@ public partial class main : ContentPage
 
         var btnRandomStart = new Button
         {
-            Text = "🎲  Kes alustab?",
+            Text = "🎲 Kes alustab?(random)",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -92,7 +92,7 @@ public partial class main : ContentPage
 
         var btnToggleBot = new Button
         {
-            Text = "🤖  vs Bot",
+            Text = "Mängija vs Bot",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -230,20 +230,19 @@ public partial class main : ContentPage
 
         if (result == "Draw")
         {
-            message = "Viik! 🤝";
-            // Ничья — сохраняем в нужный раздел в зависимости от режима
+            message = "Viik! ";
             SaveStats("draw");
         }
         else if (_isBotMode)
         {
             message = result == PlayerSymbol
-                ? "Sa võitsid boti! 🎉"
-                : "Bot võitis! 🤖";
+                ? "Sa võitsid boti! "
+                : "Bot võitis! ";
             SaveStats(result == "X" ? "x" : "o");
         }
         else
         {
-            message = $"{result} võitis! 🎉";
+            message = $"{result} võitis! ";
             SaveStats(result == "X" ? "x" : "o");
         }
 
@@ -267,7 +266,7 @@ public partial class main : ContentPage
     {
         string starter = _game.RandomStartPlayer();
         ResetBoard(starter);
-        await DisplayAlertAsync("🎲 Loosimine!", $"Alustab mängija {starter}!", "OK");
+        await DisplayAlertAsync(" Loosimine!", $"Alustab mängija {starter}!", "OK");
     }
 
     private async void OnToggleBotClicked(object? sender, EventArgs e)
@@ -278,13 +277,13 @@ public partial class main : ContentPage
         if (_isBotMode)
         {
             btn.BackgroundColor = Color.FromArgb("#e94560");
-            btn.Text = "🤖  vs Bot ON";
-            await DisplayAlertAsync("🤖 Bot", "Bot on sisse lülitatud! Sina mängid X-ga.", "OK");
+            btn.Text = "Mängija  vs Bot ON";
+            await DisplayAlertAsync(" Bot", "Bot on sisse lülitatud! Sina mängid X-ga.", "OK");
         }
         else
         {
             btn.BackgroundColor = Color.FromArgb("#16213e");
-            btn.Text = "🤖  vs Bot";
+            btn.Text = "Mängija vs Bot";
         }
 
         ResetBoard();
@@ -315,12 +314,8 @@ public partial class main : ContentPage
 
     private void SaveStats(string winner)
     {
-        // Определяем суффикс в зависимости от режима
-        // "pvp" = два игрока, "bot" = против бота
         string suffix = _isBotMode ? "bot" : "pvp";
 
-        // Сохраняем в нужную "папку" через суффикс в ключе
-        // Например: "wins_x_pvp" или "wins_x_bot"
         if (winner == "x")
             Preferences.Set($"wins_x_{suffix}", Preferences.Get($"wins_x_{suffix}", 0) + 1);
         else if (winner == "o")
