@@ -5,14 +5,28 @@ public partial class main : ContentPage
     private readonly GameLogic _game = new GameLogic();
     private readonly BotLogic _bot = new BotLogic();
     private readonly Button[] _cells = new Button[9];
-    private Label _lblCurrentPlayer;
-
+    private Label _lblCurrentPlayer = null!;
+    private Label _lblBotLevel = null!;
+    private Picker _pickerDifficulty = null!;
     private bool _isBotMode = false;
 
     private const string PlayerSymbol = "X";
     private const string BotSymbol = "O";
 
     public main()
+    {
+        BuildUI();
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        _bot.ReloadMemory();
+        if (_isBotMode)
+            UpdateBotLevelLabel();
+    }
+
+    private void BuildUI()
     {
         BackgroundColor = Color.FromArgb("#1a1a2e");
         Title = "Trips-Traps-Trull";
@@ -45,6 +59,20 @@ public partial class main : ContentPage
         };
         btnRules.Clicked += OnRulesClicked;
 
+        var btnSettings = new Button
+        {
+            Text = "⚙️",
+            FontSize = 16,
+            BackgroundColor = Color.FromArgb("#16213e"),
+            TextColor = Colors.White,
+            CornerRadius = 8,
+            HeightRequest = 36,
+            WidthRequest = 46,
+            BorderColor = Color.FromArgb("#e94560"),
+            BorderWidth = 1
+        };
+        btnSettings.Clicked += OnSettingsClicked;
+
         var topButtons = new HorizontalStackLayout
         {
             HorizontalOptions = LayoutOptions.End,
@@ -52,6 +80,7 @@ public partial class main : ContentPage
         };
         topButtons.Children.Add(btnStats);
         topButtons.Children.Add(btnRules);
+        topButtons.Children.Add(btnSettings);
 
         _lblCurrentPlayer = new Label
         {
@@ -62,11 +91,38 @@ public partial class main : ContentPage
             HorizontalOptions = LayoutOptions.Center
         };
 
+        _lblBotLevel = new Label
+        {
+            FontSize = 14,
+            TextColor = Color.FromArgb("#aaaaaa"),
+            HorizontalOptions = LayoutOptions.Center,
+            IsVisible = false
+        };
+
+        _pickerDifficulty = new Picker
+        {
+            Title = "Vali raskusaste",
+            FontSize = 15,
+            TextColor = Colors.White,
+            BackgroundColor = Color.FromArgb("#16213e"),
+            TitleColor = Color.FromArgb("#aaaaaa"),
+            HorizontalOptions = LayoutOptions.Center,
+            WidthRequest = 220,
+            IsVisible = false
+        };
+        _pickerDifficulty.Items.Add("🟢 Algaja");
+        _pickerDifficulty.Items.Add("🟡 Kesktase");
+        _pickerDifficulty.Items.Add("🟠 Kogenud");
+        _pickerDifficulty.Items.Add("🔴 Meister");
+        _pickerDifficulty.Items.Add("📈 Automaatne (kasvab)");
+        _pickerDifficulty.SelectedIndex = 4;
+        _pickerDifficulty.SelectedIndexChanged += OnDifficultyChanged;
+
         var gameGrid = BuildGrid();
 
         var btnNewGame = new Button
         {
-            Text = " Uus mäng",
+            Text = "  Uus mäng",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#e94560"),
             TextColor = Colors.White,
@@ -78,7 +134,7 @@ public partial class main : ContentPage
 
         var btnRandomStart = new Button
         {
-            Text = "🎲 Kes alustab?(random)",
+            Text = "  Kes alustab?",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -92,7 +148,7 @@ public partial class main : ContentPage
 
         var btnToggleBot = new Button
         {
-            Text = "Mängija vs Bot",
+            Text = "Mängija  vs Bot",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -119,12 +175,15 @@ public partial class main : ContentPage
             Children = { btnToggleBot }
         };
 
-        Content = new VerticalStackLayout
+        Content = new ScrollView
         {
-            Padding = new Thickness(20),
-            Spacing = 16,
-            VerticalOptions = LayoutOptions.Center,
-            Children = { topButtons, _lblCurrentPlayer, gameGrid, bottomButtons, bottomButtons2 }
+            Content = new VerticalStackLayout
+            {
+                Padding = new Thickness(20),
+                Spacing = 16,
+                VerticalOptions = LayoutOptions.Center,
+                Children = { topButtons, _lblCurrentPlayer, _lblBotLevel, _pickerDifficulty, gameGrid, bottomButtons, bottomButtons2 }
+            }
         };
     }
 
@@ -178,7 +237,10 @@ public partial class main : ContentPage
         SetButtonSymbol(btn, _game.CurrentPlayer);
 
         if (_isBotMode)
-            _bot.RecordPlayerMove(index);
+        {
+            int playerTurn = CountPlayerMoves() - 1;
+            _bot.RecordPlayerMove(index, playerTurn);
+        }
 
         string? result = _game.CheckResult();
         if (result != null)
@@ -192,6 +254,15 @@ public partial class main : ContentPage
 
         if (_isBotMode && _game.CurrentPlayer == BotSymbol)
             await MakeBotMove();
+    }
+
+    // Считаем сколько ходов уже сделал игрок (X) на доске
+    private int CountPlayerMoves()
+    {
+        int count = 0;
+        foreach (var cell in _game.Board)
+            if (cell == PlayerSymbol) count++;
+        return count;
     }
 
     private async Task MakeBotMove()
@@ -247,26 +318,31 @@ public partial class main : ContentPage
         }
 
         if (_isBotMode)
+        {
             _bot.RecordGameFinished();
+            UpdateBotLevelLabel();
+        }
 
         bool playAgain = await DisplayAlertAsync("Mäng läbi!", message, "Uus mäng", "Välju");
 
         if (playAgain)
-            ResetBoard();
+            await ResetBoard();
         else
             await Shell.Current.GoToAsync("..");
     }
 
-    private void OnNewGameClicked(object? sender, EventArgs e)
-    {
-        ResetBoard();
-    }
+    private async void OnNewGameClicked(object? sender, EventArgs e) => await ResetBoard();
 
     private async void OnRandomStartClicked(object? sender, EventArgs e)
     {
         string starter = _game.RandomStartPlayer();
-        ResetBoard(starter);
-        await DisplayAlertAsync(" Loosimine!", $"Alustab mängija {starter}!", "OK");
+        await ResetBoard(starter);
+
+        string msg = _isBotMode && starter == BotSymbol
+            ? "Bot alustab! ⚡"
+            : $"Alustab mängija {starter}!";
+
+        await DisplayAlertAsync("🎲 Loosimine!", msg, "OK");
     }
 
     private async void OnToggleBotClicked(object? sender, EventArgs e)
@@ -278,29 +354,70 @@ public partial class main : ContentPage
         {
             btn.BackgroundColor = Color.FromArgb("#e94560");
             btn.Text = "Mängija  vs Bot ON";
+            _lblBotLevel.IsVisible = true;
+            _pickerDifficulty.IsVisible = true;
+            UpdateBotLevelLabel();
             await DisplayAlertAsync(" Bot", "Bot on sisse lülitatud! Sina mängid X-ga.", "OK");
         }
         else
         {
             btn.BackgroundColor = Color.FromArgb("#16213e");
-            btn.Text = "Mängija vs Bot";
+            btn.Text = "Mängija  vs Bot";
+            _lblBotLevel.IsVisible = false;
+            _pickerDifficulty.IsVisible = false;
         }
 
-        ResetBoard();
+        await ResetBoard();
     }
 
-    private async void OnStatsClicked(object? sender, EventArgs e)
+    private void OnDifficultyChanged(object? sender, EventArgs e)
     {
+        int selected = _pickerDifficulty.SelectedIndex;
+        _bot.ManualDifficulty = selected == 4 ? -1 : selected;
+        UpdateBotLevelLabel();
+    }
+
+    private void UpdateBotLevelLabel()
+    {
+        if (_bot.ManualDifficulty >= 0)
+        {
+            string[] levels = { "🟢 Algaja", "🟡 Kesktase", "🟠 Kogenud", "🔴 Meister" };
+            _lblBotLevel.Text = $"Boti tase: {levels[_bot.ManualDifficulty]}";
+        }
+        else
+        {
+            int games = _bot.GamesPlayed;
+            string level;
+            if (games <= 2) level = "🟢 Algaja";
+            else if (games <= 6) level = "🟡 Kesktase";
+            else if (games <= 10) level = "🟠 Kogenud";
+            else level = "🔴 Meister";
+            _lblBotLevel.Text = $"Boti tase: {level}  ({games} mängu)";
+        }
+    }
+
+    private async void OnStatsClicked(object? sender, EventArgs e) =>
         await Shell.Current.GoToAsync("StatsPage");
-    }
 
-    private async void OnRulesClicked(object? sender, EventArgs e)
-    {
+    private async void OnRulesClicked(object? sender, EventArgs e) =>
         await Shell.Current.GoToAsync("RulesPage");
-    }
 
-    private void ResetBoard(string startingPlayer = "X")
+    private async void OnSettingsClicked(object? sender, EventArgs e) =>
+        await Shell.Current.GoToAsync("SettingsPage");
+
+    private async Task ResetBoard(string? startingPlayer = null)
     {
+        // В бот-режиме без явного указания — случайно выбираем кто начинает
+        if (_isBotMode && startingPlayer == null)
+        {
+            var rnd = new Random();
+            startingPlayer = rnd.Next(2) == 0 ? PlayerSymbol : BotSymbol;
+        }
+        else
+        {
+            startingPlayer ??= "X";
+        }
+
         _game.Reset(startingPlayer);
 
         foreach (var cell in _cells)
@@ -310,6 +427,10 @@ public partial class main : ContentPage
         }
 
         _lblCurrentPlayer.Text = $"Käib: {startingPlayer}";
+
+        // Если первым ходит бот — сразу делаем его ход
+        if (_isBotMode && startingPlayer == BotSymbol)
+            await MakeBotMove();
     }
 
     private void SaveStats(string winner)

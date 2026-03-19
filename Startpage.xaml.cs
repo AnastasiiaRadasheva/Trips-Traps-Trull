@@ -26,7 +26,7 @@ public partial class StartPage : ContentPage
 
         var btnNewGame = new Button
         {
-            Text = "🎮  Uus mäng",
+            Text = "  Uus mäng",
             FontSize = 18,
             BackgroundColor = Color.FromArgb("#e94560"),
             TextColor = Colors.White,
@@ -38,7 +38,7 @@ public partial class StartPage : ContentPage
 
         var btnStats = new Button
         {
-            Text = "📊  Statistika",
+            Text = "  Statistika",
             FontSize = 18,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -52,7 +52,7 @@ public partial class StartPage : ContentPage
 
         var btnRules = new Button
         {
-            Text = "📜  Reeglid",
+            Text = "Reeglid",
             FontSize = 18,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -64,13 +64,27 @@ public partial class StartPage : ContentPage
         };
         btnRules.Clicked += OnRulesClicked;
 
+        var btnSettings = new Button
+        {
+            Text = "  Seaded",
+            FontSize = 18,
+            BackgroundColor = Color.FromArgb("#16213e"),
+            TextColor = Colors.White,
+            CornerRadius = 12,
+            HeightRequest = 55,
+            WidthRequest = 220,
+            BorderColor = Color.FromArgb("#e94560"),
+            BorderWidth = 1
+        };
+        btnSettings.Clicked += OnSettingsClicked;
+
         Content = new VerticalStackLayout
         {
             VerticalOptions = LayoutOptions.Center,
             HorizontalOptions = LayoutOptions.Center,
             Spacing = 20,
             Padding = new Thickness(40),
-            Children = { title, subtitle, btnNewGame, btnStats, btnRules }
+            Children = { title, subtitle, btnNewGame, btnStats, btnRules, btnSettings }
         };
     }
 
@@ -87,5 +101,10 @@ public partial class StartPage : ContentPage
     private async void OnRulesClicked(object? sender, EventArgs e)
     {
         await Shell.Current.GoToAsync("RulesPage");
+    }
+
+    private async void OnSettingsClicked(object? sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("SettingsPage");
     }
 }

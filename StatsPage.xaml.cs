@@ -143,31 +143,6 @@ public partial class StatsPage : ContentPage
             }
         };
 
-        var btnResetStats = new Button
-        {
-            Text = " Lähtesta statistika",
-            FontSize = 16,
-            BackgroundColor = Color.FromArgb("#16213e"),
-            TextColor = Colors.White,
-            CornerRadius = 10,
-            HeightRequest = 48,
-            BorderColor = Color.FromArgb("#e94560"),
-            BorderWidth = 1
-        };
-        btnResetStats.Clicked += OnResetStatsClicked;
-
-        var btnResetBot = new Button
-        {
-            Text = "  Lähtesta boti tase",
-            FontSize = 16,
-            BackgroundColor = Color.FromArgb("#16213e"),
-            TextColor = Colors.White,
-            CornerRadius = 10,
-            HeightRequest = 48,
-            BorderColor = Color.FromArgb("#e94560"),
-            BorderWidth = 1
-        };
-        btnResetBot.Clicked += OnResetBotClicked;
 
         var btnBack = new Button
         {
@@ -189,9 +164,9 @@ public partial class StatsPage : ContentPage
                 Children =
                 {
                     title,
-                    pvpTitle, pvpFrame, btnResetStats,
+                    pvpTitle, pvpFrame, 
                     botStatsTitle, botStatsFrame,
-                    botLevelTitle, botLevelFrame, btnResetBot,
+                    botLevelTitle, botLevelFrame, 
                     btnBack
                 }
             }
@@ -226,41 +201,6 @@ public partial class StatsPage : ContentPage
         return "Tase: Meister 🔴";
     }
 
-    private async void OnResetStatsClicked(object? sender, EventArgs e)
-    {
-        bool confirm = await DisplayAlertAsync("Kinnita", "Kas soovid statistika lähtestada?", "Jah", "Ei");
-
-        if (confirm)
-        {
-            Preferences.Remove("wins_x_pvp");
-            Preferences.Remove("wins_o_pvp");
-            Preferences.Remove("draws_pvp");
-            Preferences.Remove("wins_x_bot");
-            Preferences.Remove("wins_o_bot");
-            Preferences.Remove("draws_bot");
-            LoadStats();
-        }
-    }
-
-    private async void OnResetBotClicked(object? sender, EventArgs e)
-    {
-        bool confirm = await DisplayAlertAsync(
-            "Kinnita",
-            "Bot unustab kõik ja muutub jälle nõrgaks. Kas oled kindel?",
-            "Jah",
-            "Ei");
-
-        if (confirm)
-        {
-            Preferences.Remove("bot_games_played");
-
-            for (int i = 0; i < 9; i++)
-                Preferences.Remove($"bot_memory_{i}");
-
-            LoadStats();
-            await DisplayAlertAsync("✅", "Bot on lähtestatud! Ta on jälle nõrk.", "OK");
-        }
-    }
 
     private async void OnBackClicked(object? sender, EventArgs e)
     {
