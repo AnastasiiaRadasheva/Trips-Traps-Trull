@@ -133,6 +133,20 @@ private int _turnNumber = 0;
         };
         btnNewGame.Clicked += OnNewGameClicked;
 
+        var btn3inim = new Button
+        {
+            Text = "  Kes alustab?",
+            FontSize = 16,
+            BackgroundColor = Color.FromArgb("#16213e"),
+            TextColor = Colors.White,
+            CornerRadius = 10,
+            HeightRequest = 48,
+            WidthRequest = 150,
+            BorderColor = Color.FromArgb("#e94560"),
+            BorderWidth = 1
+        };
+        btn3inim.Clicked += Onbtn3Clicked;
+
         var btnRandomStart = new Button
         {
             Text = "  Kes alustab?",
@@ -183,7 +197,7 @@ private int _turnNumber = 0;
                 Padding = new Thickness(20),
                 Spacing = 16,
                 VerticalOptions = LayoutOptions.Center,
-                Children = { topButtons, _lblCurrentPlayer, _lblBotLevel, _pickerDifficulty, gameGrid, bottomButtons, bottomButtons2 }
+                Children = { topButtons, _lblCurrentPlayer, _lblBotLevel, _pickerDifficulty, gameGrid, bottomButtons, bottomButtons2, btn3inim }
             }
         };
     }
@@ -254,15 +268,6 @@ _turnNumber++;
 
         if (_isBotMode && _game.CurrentPlayer == BotSymbol)
             await MakeBotMove();
-    }
-
-    // Считаем сколько ходов уже сделал игрок (X) на доске
-    private int CountPlayerMoves()
-    {
-        int count = 0;
-        foreach (var cell in _game.Board)
-            if (cell == PlayerSymbol) count++;
-        return count;
     }
 
     private async Task MakeBotMove()
@@ -405,9 +410,13 @@ _turnNumber++;
     private async void OnSettingsClicked(object? sender, EventArgs e) =>
         await Shell.Current.GoToAsync("SettingsPage");
 
+
+    private async void Onbtn3Clicked(object? sender, EventArgs e) =>
+        await Shell.Current.GoToAsync("TournamentPage");
+
     private async Task ResetBoard(string? startingPlayer = null)
     {
-        // В бот-режиме без явного указания — случайно выбираем кто начинает
+        _turnNumber = 0;
         if (_isBotMode && startingPlayer == null)
         {
             var rnd = new Random();
@@ -428,7 +437,6 @@ _turnNumber++;
 
         _lblCurrentPlayer.Text = $"Käib: {startingPlayer}";
 
-        // Если первым ходит бот — сразу делаем его ход
         if (_isBotMode && startingPlayer == BotSymbol)
             await MakeBotMove();
     }

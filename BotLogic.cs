@@ -6,10 +6,8 @@ public class BotLogic
 
     public int ManualDifficulty { get; set; } = -1;
 
-    // Частота ходов игрока по клетке
     private int[] _playerMoveFrequency = new int[9];
 
-    // Частота ходов игрока по порядковому номеру хода (1-й ход, 2-й ход, ...)
     private int[][] _playerMoveByTurn = new int[9][];
 
     private readonly Random _random = new Random();
@@ -38,12 +36,10 @@ public class BotLogic
     {
         string playerSymbol = botSymbol == "X" ? "O" : "X";
 
-        // 1. Всегда: выиграть если можно
         int winMove = FindWinningMove(board, botSymbol);
         if (winMove != -1)
             return winMove;
 
-        // 2. Всегда: заблокировать немедленную победу игрока
         int blockMove = FindWinningMove(board, playerSymbol);
         if (blockMove != -1)
         {
@@ -52,12 +48,10 @@ public class BotLogic
                 return blockMove;
         }
 
-        // 3. На высоком уровне — тактическое предупреждение по памяти
         int tacticalMove = GetTacticalCounterMove(board, playerSymbol);
         if (tacticalMove != -1)
             return tacticalMove;
 
-        // 4. Центр (с вероятностью по уровню)
         if (string.IsNullOrEmpty(board[4]))
         {
             double centerChance = GetCenterChance();
@@ -65,7 +59,6 @@ public class BotLogic
                 return 4;
         }
 
-        // 5. Ход по памяти (старая логика)
         int memoryMove = GetMoveFromMemory(board);
         if (memoryMove != -1)
             return memoryMove;
@@ -73,23 +66,18 @@ public class BotLogic
         return GetRandomMove(board);
     }
 
-    /// <summary>
-    /// Тактическое противодействие: бот анализирует текущую позицию игрока
-    /// и предсказывает его следующий ход, занимая опасную клетку заранее.
-    /// </summary>
     private int GetTacticalCounterMove(string[] board, string playerSymbol)
     {
         double memoryWeight = GetMemoryWeight();
         if (memoryWeight <= 0)
             return -1;
 
-        int playerTurn = CountSymbols(board, playerSymbol); // сколько ходов уже сделал игрок
-        int nextTurn = playerTurn; // индекс следующего хода игрока (0-based)
+        int playerTurn = CountSymbols(board, playerSymbol);
+        int nextTurn = playerTurn; 
 
         if (nextTurn >= 9)
             return -1;
 
-        // Оцениваем каждую свободную клетку
         var freeCells = new List<int>();
         for (int i = 0; i < 9; i++)
             if (string.IsNullOrEmpty(board[i]))
@@ -98,10 +86,6 @@ public class BotLogic
         if (freeCells.Count == 0)
             return -1;
 
-        // Считаем угрозу для каждой свободной клетки:
-        // угроза = (частота хода игрока на эту клетку вообще) 
-        //        + (частота хода на эту клетку именно на этом номере хода)
-        //        + бонус если клетка участвует в незаблокированной вилке игрока
         int bestCell = -1;
         double bestScore = -1;
 
@@ -109,16 +93,12 @@ public class BotLogic
         {
             double score = 0;
 
-            // Общая частота
             score += _playerMoveFrequency[cell] * 1.0;
 
-            // Частота на конкретном номере хода (весомее — игрок часто начинает одинаково)
             score += _playerMoveByTurn[nextTurn][cell] * 2.0;
 
-            // Бонус: клетка участвует в потенциальной вилке игрока
             score += CountForkPotential(board, playerSymbol, cell) * 3.0;
 
-            // Масштабируем по уровню
             score *= memoryWeight;
 
             if (score > bestScore)
@@ -128,7 +108,6 @@ public class BotLogic
             }
         }
 
-        // Применяем порог — на низком уровне игнорируем слабые сигналы
         double threshold = GetMemoryThreshold();
         if (bestScore >= threshold)
             return bestCell;
@@ -136,10 +115,6 @@ public class BotLogic
         return -1;
     }
 
-    /// <summary>
-    /// Сколько линий выигрыша проходит через данную клетку, где игрок уже стоит
-    /// хотя бы в одной другой клетке линии, а бот не стоит ни в одной.
-    /// </summary>
     private int CountForkPotential(string[] board, string playerSymbol, int cell)
     {
         string botSymbol = playerSymbol == "X" ? "O" : "X";
@@ -183,13 +158,12 @@ public class BotLogic
         return 1.0;
     }
 
-    // Минимальный счёт угрозы, при котором бот реагирует
     private double GetMemoryThreshold()
     {
         int level = ManualDifficulty >= 0 ? ManualDifficulty * 3 : _gamesPlayed;
         if (level <= 6) return 4.0;
         if (level <= 10) return 2.0;
-        return 1.0; // на высоком уровне реагирует даже на слабые сигналы
+        return 1.0; 
     }
 
     private double GetIgnoreChance()
@@ -209,7 +183,6 @@ public class BotLogic
         return 1.0;
     }
 
-    // Вызывать при каждом ходе игрока, передавая номер хода (0-based)
     public void RecordPlayerMove(int index, int turnNumber = -1)
     {
         _playerMoveFrequency[index]++;
