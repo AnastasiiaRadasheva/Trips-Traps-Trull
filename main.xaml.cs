@@ -2,6 +2,7 @@ namespace TTT;
 
 public partial class main : ContentPage
 {
+private int _turnNumber = 0;
     private readonly GameLogic _game = new GameLogic();
     private readonly BotLogic _bot = new BotLogic();
     private readonly Button[] _cells = new Button[9];
@@ -233,7 +234,7 @@ public partial class main : ContentPage
 
         if (!_game.MakeMove(index))
             return;
-
+_turnNumber++;
         SetButtonSymbol(btn, _game.CurrentPlayer);
 
         if (_isBotMode)
