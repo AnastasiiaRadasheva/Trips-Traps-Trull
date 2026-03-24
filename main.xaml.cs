@@ -239,8 +239,7 @@ _turnNumber++;
 
         if (_isBotMode)
         {
-            int playerTurn = CountPlayerMoves() - 1;
-            _bot.RecordPlayerMove(index, playerTurn);
+            _bot.RecordPlayerMove(index, _turnNumber - 1);
         }
 
         string? result = _game.CheckResult();
