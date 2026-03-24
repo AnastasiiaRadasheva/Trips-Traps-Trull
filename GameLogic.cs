@@ -56,6 +56,7 @@ public class GameLogic
 
     public void Reset(string startingPlayer = "X")
     {
+        _turnNumber = 0;
         Board = new string[9];
         CurrentPlayer = startingPlayer;
         GameOver = false;
