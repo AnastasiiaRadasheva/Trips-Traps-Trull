@@ -42,9 +42,60 @@ public partial class TournamentPage : ContentPage
     {
         BackgroundColor = Color.FromArgb("#1a1a2e");
 
+        // ✅ TOP BUTTONS (сначала создаём)
+        var btnStats = new Button
+        {
+            Text = "📊",
+            FontSize = 16,
+            BackgroundColor = Color.FromArgb("#16213e"),
+            TextColor = Colors.White,
+            CornerRadius = 8,
+            HeightRequest = 36,
+            WidthRequest = 46,
+            BorderColor = Color.FromArgb("#e94560"),
+            BorderWidth = 1
+        };
+        btnStats.Clicked += OnStatsClicked;
+
+        var btnRules = new Button
+        {
+            Text = "📜",
+            FontSize = 16,
+            BackgroundColor = Color.FromArgb("#16213e"),
+            TextColor = Colors.White,
+            CornerRadius = 8,
+            HeightRequest = 36,
+            WidthRequest = 46,
+            BorderColor = Color.FromArgb("#e94560"),
+            BorderWidth = 1
+        };
+        btnRules.Clicked += OnRulesClicked;
+
+        var btnSettings = new Button
+        {
+            Text = "⚙️",
+            FontSize = 16,
+            BackgroundColor = Color.FromArgb("#16213e"),
+            TextColor = Colors.White,
+            CornerRadius = 8,
+            HeightRequest = 36,
+            WidthRequest = 46,
+            BorderColor = Color.FromArgb("#e94560"),
+            BorderWidth = 1
+        };
+        btnSettings.Clicked += OnSettingsClicked;
+
+        var topButtons = new HorizontalStackLayout
+        {
+            HorizontalOptions = LayoutOptions.End,
+            Spacing = 8,
+            Children = { btnStats, btnRules, btnSettings }
+        };
+
+        // остальные элементы
         _lblPhase = new Label
         {
-            Text = "TURNIIR",
+            Text = "2 inimene",
             FontSize = 24,
             FontAttributes = FontAttributes.Bold,
             TextColor = Color.FromArgb("#e94560"),
@@ -70,18 +121,20 @@ public partial class TournamentPage : ContentPage
             ColumnSpacing = 8
         };
 
+ 
         var centerLayout = new VerticalStackLayout
         {
             Spacing = 16,
             VerticalOptions = LayoutOptions.Center,
             HorizontalOptions = LayoutOptions.Center,
             Children =
-            {
-                _lblPhase,
-                _lblCurrentPlayer,
-                _gameGrid,
-                _btnRestart
-            }
+        {
+            topButtons, // ✅ ВОТ ТУТ ВСТАВЛЯЕМ
+            _lblPhase,
+            _lblCurrentPlayer,
+            _gameGrid,
+            _btnRestart
+        }
         };
 
         Content = new ScrollView
@@ -233,6 +286,16 @@ public partial class TournamentPage : ContentPage
             ? SymbolColors[symbol]
             : Colors.White;
     }
+
+    private async void OnStatsClicked(object? sender, EventArgs e) =>
+    await Navigation.PushAsync(new StatsPage());
+
+    private async void OnRulesClicked(object? sender, EventArgs e) =>
+        await Navigation.PushAsync(new RulesPage());
+
+    private async void OnSettingsClicked(object? sender, EventArgs e) =>
+        await Navigation.PushAsync(new SettingsPage());
+
 
     private string NameOf(string symbol)
         => _playerNames.ContainsKey(symbol) ? _playerNames[symbol] : symbol;

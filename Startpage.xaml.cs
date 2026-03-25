@@ -2,6 +2,25 @@ namespace TTT;
 
 public partial class StartPage : ContentPage
 {
+    VerticalStackLayout vst;
+    ScrollView sv;
+
+    public List<ContentPage> Lehed = new List<ContentPage>()
+    {
+        new main(),
+        new StatsPage(),
+        new RulesPage(),
+        new SettingsPage()
+    };
+
+    public List<string> LeheNimed = new List<string>()
+    {
+        "Uus mäng",
+        "Statistika",
+        "Reeglid",
+        "Seaded"
+    };
+
     public StartPage()
     {
         BackgroundColor = Color.FromArgb("#1a1a2e");
@@ -24,87 +43,51 @@ public partial class StartPage : ContentPage
             Margin = new Thickness(0, 0, 0, 20)
         };
 
-        var btnNewGame = new Button
+        vst = new VerticalStackLayout
         {
-            Text = "  Uus mäng",
-            FontSize = 18,
-            BackgroundColor = Color.FromArgb("#e94560"),
-            TextColor = Colors.White,
-            CornerRadius = 12,
-            HeightRequest = 55,
-            WidthRequest = 220
+            Padding = 20,
+            Spacing = 15,
+            VerticalOptions = LayoutOptions.Center
         };
-        btnNewGame.Clicked += OnNewGameClicked;
 
-        var btnStats = new Button
+        vst.Children.Add(title);
+        vst.Children.Add(subtitle);
+        for (int i = 0; i < Lehed.Count; i++)
         {
-            Text = "  Statistika",
-            FontSize = 18,
-            BackgroundColor = Color.FromArgb("#16213e"),
-            TextColor = Colors.White,
-            CornerRadius = 12,
-            HeightRequest = 55,
-            WidthRequest = 220,
-            BorderColor = Color.FromArgb("#e94560"),
-            BorderWidth = 1
-        };
-        btnStats.Clicked += OnStatsClicked;
+            int index = i;
 
-        var btnRules = new Button
-        {
-            Text = "Reeglid",
-            FontSize = 18,
-            BackgroundColor = Color.FromArgb("#16213e"),
-            TextColor = Colors.White,
-            CornerRadius = 12,
-            HeightRequest = 55,
-            WidthRequest = 220,
-            BorderColor = Color.FromArgb("#e94560"),
-            BorderWidth = 1
-        };
-        btnRules.Clicked += OnRulesClicked;
+            Button nupp = new Button
+            {
+                Text = LeheNimed[i],
+                FontSize = 18,
+                BackgroundColor = index == 0
+                    ? Color.FromArgb("#e94560")
+                    : Color.FromArgb("#16213e"),
+                TextColor = Colors.White,
+                CornerRadius = 12,
+                HeightRequest = 55,
+                WidthRequest = 220,
+                BorderColor = Color.FromArgb("#e94560"),
+                BorderWidth = 1
+            };
 
-        var btnSettings = new Button
-        {
-            Text = "  Seaded",
-            FontSize = 18,
-            BackgroundColor = Color.FromArgb("#16213e"),
-            TextColor = Colors.White,
-            CornerRadius = 12,
-            HeightRequest = 55,
-            WidthRequest = 220,
-            BorderColor = Color.FromArgb("#e94560"),
-            BorderWidth = 1
-        };
-        btnSettings.Clicked += OnSettingsClicked;
+            nupp.Clicked += async (sender, e) =>
+            {
+                if (index == 0)
+                {
+                    await Navigation.PushAsync(new ModeSelectPage());
+                }
+                else
+                {
+                    var valik = Lehed[index];
+                    await Navigation.PushAsync(valik);
+                }
+            };
 
-        Content = new VerticalStackLayout
-        {
-            VerticalOptions = LayoutOptions.Center,
-            HorizontalOptions = LayoutOptions.Center,
-            Spacing = 20,
-            Padding = new Thickness(40),
-            Children = { title, subtitle, btnNewGame, btnStats, btnRules, btnSettings }
-        };
-    }
+            vst.Children.Add(nupp);
+        }
 
-    private async void OnNewGameClicked(object? sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("main");
-    }
-
-    private async void OnStatsClicked(object? sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("StatsPage");
-    }
-
-    private async void OnRulesClicked(object? sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("RulesPage");
-    }
-
-    private async void OnSettingsClicked(object? sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("SettingsPage");
+        sv = new ScrollView { Content = vst };
+        Content = sv;
     }
 }

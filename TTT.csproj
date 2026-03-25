@@ -80,6 +80,9 @@
 	  <MauiXaml Update="main.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="ModeSelectPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Rulespage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

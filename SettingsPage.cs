@@ -29,25 +29,50 @@ public partial class SettingsPage : ContentPage
 
         var statsDesc = new Label
         {
-            Text = "Kustutab kõik võidud, kaotused ja viigid — nii PvP kui ka boti vastu.",
+            Text = "Kustutab statistika eraldi PvP ja bot režiimis.",
             FontSize = 14,
             TextColor = Color.FromArgb("#aaaaaa"),
             HorizontalOptions = LayoutOptions.Start
         };
 
-        var btnResetStats = new Button
+        var btnResetPvP = new Button
         {
-            Text = " Lähtesta statistika",
+            Text = "🧑 Lähtesta PvP statistika",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
             CornerRadius = 10,
             HeightRequest = 48,
-            HorizontalOptions = LayoutOptions.Fill,
             BorderColor = Color.FromArgb("#e94560"),
             BorderWidth = 1
         };
-        btnResetStats.Clicked += OnResetStatsClicked;
+        btnResetPvP.Clicked += OnResetPvPStatsClicked;
+
+        var btnResetBotStats = new Button
+        {
+            Text = "🤖 Lähtesta bot statistika",
+            FontSize = 16,
+            BackgroundColor = Color.FromArgb("#16213e"),
+            TextColor = Colors.White,
+            CornerRadius = 10,
+            HeightRequest = 48,
+            BorderColor = Color.FromArgb("#e94560"),
+            BorderWidth = 1
+        };
+        btnResetBotStats.Clicked += OnResetBotStatsClicked;
+
+        var btnResetBotLevel = new Button
+        {
+            Text = "🧠 Lähtesta boti tase",
+            FontSize = 16,
+            BackgroundColor = Color.FromArgb("#16213e"),
+            TextColor = Colors.White,
+            CornerRadius = 10,
+            HeightRequest = 48,
+            BorderColor = Color.FromArgb("#e94560"),
+            BorderWidth = 1
+        };
+        btnResetBotLevel.Clicked += OnResetBotLevelClicked;
 
         var statsFrame = new Border
         {
@@ -58,51 +83,14 @@ public partial class SettingsPage : ContentPage
             Content = new VerticalStackLayout
             {
                 Spacing = 12,
-                Children = { statsTitle, statsDesc, btnResetStats }
-            }
-        };
-
-        var botTitle = new Label
-        {
-            Text = " Boti tase",
-            FontSize = 20,
-            FontAttributes = FontAttributes.Bold,
-            TextColor = Colors.White,
-            HorizontalOptions = LayoutOptions.Start
-        };
-
-        var botDesc = new Label
-        {
-            Text = "Bot unustab sinu mänguharjumused ja muutub jälle nõrgaks algajaks.",
-            FontSize = 14,
-            TextColor = Color.FromArgb("#aaaaaa"),
-            HorizontalOptions = LayoutOptions.Start
-        };
-
-        var btnResetBot = new Button
-        {
-            Text = " Lähtesta boti tase",
-            FontSize = 16,
-            BackgroundColor = Color.FromArgb("#16213e"),
-            TextColor = Colors.White,
-            CornerRadius = 10,
-            HeightRequest = 48,
-            HorizontalOptions = LayoutOptions.Fill,
-            BorderColor = Color.FromArgb("#e94560"),
-            BorderWidth = 1
-        };
-        btnResetBot.Clicked += OnResetBotClicked;
-
-        var botFrame = new Border
-        {
-            BackgroundColor = Color.FromArgb("#16213e"),
-            StrokeShape = new RoundRectangle { CornerRadius = 12 },
-            Stroke = Color.FromArgb("#e94560"),
-            Padding = new Thickness(16),
-            Content = new VerticalStackLayout
-            {
-                Spacing = 12,
-                Children = { botTitle, botDesc, btnResetBot }
+                Children =
+                {
+                    statsTitle,
+                    statsDesc,
+                    btnResetPvP,
+                    btnResetBotStats,
+                    btnResetBotLevel
+                }
             }
         };
 
@@ -123,16 +111,21 @@ public partial class SettingsPage : ContentPage
             {
                 Spacing = 20,
                 Padding = new Thickness(24),
-                Children = { title, statsFrame, botFrame, btnBack }
+                Children =
+                {
+                    title,
+                    statsFrame,
+                    btnBack
+                }
             }
         };
     }
 
-    private async void OnResetStatsClicked(object? sender, EventArgs e)
+    private async void OnResetPvPStatsClicked(object? sender, EventArgs e)
     {
         bool confirm = await DisplayAlertAsync(
             "Kinnita",
-            "Kas soovid kõik tulemused kustutada?",
+            "Kas kustutada PvP statistika?",
             "Jah",
             "Ei");
 
@@ -141,19 +134,34 @@ public partial class SettingsPage : ContentPage
             Preferences.Remove("wins_x_pvp");
             Preferences.Remove("wins_o_pvp");
             Preferences.Remove("draws_pvp");
+
+            await DisplayAlertAsync("✅", "PvP statistika kustutatud!", "OK");
+        }
+    }
+
+    private async void OnResetBotStatsClicked(object? sender, EventArgs e)
+    {
+        bool confirm = await DisplayAlertAsync(
+            "Kinnita",
+            "Kas kustutada bot statistika?",
+            "Jah",
+            "Ei");
+
+        if (confirm)
+        {
             Preferences.Remove("wins_x_bot");
             Preferences.Remove("wins_o_bot");
             Preferences.Remove("draws_bot");
 
-            await DisplayAlertAsync("✅", "Statistika on kustutatud!", "OK");
+            await DisplayAlertAsync("✅", "Bot statistika kustutatud!", "OK");
         }
     }
 
-    private async void OnResetBotClicked(object? sender, EventArgs e)
+    private async void OnResetBotLevelClicked(object? sender, EventArgs e)
     {
         bool confirm = await DisplayAlertAsync(
             "Kinnita",
-            "Bot unustab kõik ja muutub jälle nõrgaks. Kas oled kindel?",
+            "Kas lähtestada boti tase ja mälu?",
             "Jah",
             "Ei");
 
@@ -164,12 +172,12 @@ public partial class SettingsPage : ContentPage
             for (int i = 0; i < 9; i++)
                 Preferences.Remove($"bot_memory_{i}");
 
-            await DisplayAlertAsync("✅", "Bot on lähtestatud! Ta on jälle nõrk.", "OK");
+            await DisplayAlertAsync("✅", "Boti tase lähtestatud!", "OK");
         }
     }
 
     private async void OnBackClicked(object? sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync("..");
+        await Navigation.PopAsync();
     }
 }

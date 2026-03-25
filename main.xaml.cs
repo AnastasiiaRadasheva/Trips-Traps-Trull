@@ -6,6 +6,9 @@ private int _turnNumber = 0;
     private readonly GameLogic _game = new GameLogic();
     private readonly BotLogic _bot = new BotLogic();
     private readonly Button[] _cells = new Button[9];
+    private Button _btnRandomStart = null!;
+    private int _randomStartUses = 0;
+    private const int MaxRandomStarts = 3;
     private Label _lblCurrentPlayer = null!;
     private Label _lblBotLevel = null!;
     private Picker _pickerDifficulty = null!;
@@ -133,19 +136,7 @@ private int _turnNumber = 0;
         };
         btnNewGame.Clicked += OnNewGameClicked;
 
-        var btn3inim = new Button
-        {
-            Text = " TURNIR(3 inimesed)",
-            FontSize = 16,
-            BackgroundColor = Color.FromArgb("#16213e"),
-            TextColor = Colors.White,
-            CornerRadius = 10,
-            HeightRequest = 48,
-            WidthRequest = 150,
-            BorderColor = Color.FromArgb("#e94560"),
-            BorderWidth = 1
-        };
-        btn3inim.Clicked += Onbtn3Clicked;
+     
 
         var btnRandomStart = new Button
         {
@@ -160,6 +151,8 @@ private int _turnNumber = 0;
             BorderWidth = 1
         };
         btnRandomStart.Clicked += OnRandomStartClicked;
+        _btnRandomStart = btnRandomStart;
+        UpdateRandomStartButton();
 
         var btnToggleBot = new Button
         {
@@ -180,7 +173,7 @@ private int _turnNumber = 0;
             HorizontalOptions = LayoutOptions.Center,
             Spacing = 12,
             Margin = new Thickness(0, 10, 0, 0),
-            Children = { btnNewGame, btnRandomStart }
+            Children = { btnNewGame, _btnRandomStart }
         };
 
         var bottomButtons2 = new HorizontalStackLayout
@@ -197,11 +190,15 @@ private int _turnNumber = 0;
                 Padding = new Thickness(20),
                 Spacing = 16,
                 VerticalOptions = LayoutOptions.Center,
-                Children = { topButtons, _lblCurrentPlayer, _lblBotLevel, _pickerDifficulty, gameGrid, bottomButtons, bottomButtons2, btn3inim }
+                Children = { topButtons, _lblCurrentPlayer, _lblBotLevel, _pickerDifficulty, gameGrid, bottomButtons, bottomButtons2}
             }
         };
     }
-
+    private void UpdateRandomStartButton()
+    {
+        int used = _randomStartUses;
+        _btnRandomStart.Text = $"Kes alustab? ({used}/{MaxRandomStarts})";
+    }
     private Grid BuildGrid()
     {
         var grid = new Grid
@@ -340,14 +337,23 @@ _turnNumber++;
 
     private async void OnRandomStartClicked(object? sender, EventArgs e)
     {
+        if (_randomStartUses >= MaxRandomStarts)
+        {
+            await DisplayAlertAsync("⚠️", "Sa saad muuta ainult 3 korda.", "OK");
+            return;
+        }
+
+        _randomStartUses++;
+        UpdateRandomStartButton();
+
         string starter = _game.RandomStartPlayer();
-        await ResetBoard(starter);
 
         string msg = _isBotMode && starter == BotSymbol
             ? "Bot alustab! ⚡"
             : $"Alustab mängija {starter}!";
 
         await DisplayAlertAsync("🎲 Loosimine!", msg, "OK");
+        _lblCurrentPlayer.Text = $"Käib: {_game.CurrentPlayer}";
     }
 
     private async void OnToggleBotClicked(object? sender, EventArgs e)
@@ -402,21 +408,24 @@ _turnNumber++;
     }
 
     private async void OnStatsClicked(object? sender, EventArgs e) =>
-        await Shell.Current.GoToAsync("StatsPage");
+    await Navigation.PushAsync(new StatsPage());
 
     private async void OnRulesClicked(object? sender, EventArgs e) =>
-        await Shell.Current.GoToAsync("RulesPage");
+        await Navigation.PushAsync(new RulesPage());
 
     private async void OnSettingsClicked(object? sender, EventArgs e) =>
-        await Shell.Current.GoToAsync("SettingsPage");
+        await Navigation.PushAsync(new SettingsPage());
 
-
-    private async void Onbtn3Clicked(object? sender, EventArgs e) =>
-        await Shell.Current.GoToAsync("TournamentPage");
 
     private async Task ResetBoard(string? startingPlayer = null)
     {
+        _randomStartUses = 0;
+        UpdateRandomStartButton();
+
+        _btnRandomStart.IsEnabled = true; // 🔵 включаем кнопку снова
+
         _turnNumber = 0;
+
         if (_isBotMode && startingPlayer == null)
         {
             var rnd = new Random();
