@@ -3,18 +3,15 @@ namespace TTT;
 public partial class TournamentPage : ContentPage
 {
     private readonly TournamentManager _tournament = new();
-    private readonly GameLogic _game = new(4);
+    private readonly GameLogic _game = new();
 
     private Button[] _cells = Array.Empty<Button>();
     private Grid _gameGrid = null!;
 
     private Label _lblPhase = null!;
     private Label _lblCurrentPlayer = null!;
-    private Label _lblBye = null!;
 
-    private Entry _entryX = null!;
-    private Entry _entryO = null!;
-    private Entry _entryZ = null!;
+    private Button _btnRestart = null!;
 
     private readonly Dictionary<string, string> _playerNames = new()
     {
@@ -33,79 +30,70 @@ public partial class TournamentPage : ContentPage
     public TournamentPage()
     {
         BuildUI();
+
+        Loaded += async (_, __) =>
+        {
+            _tournament.Start(new List<string> { "X", "O", "Z" });
+            await StartPhase();
+        };
     }
 
-    // ───────── UI BUILD ─────────
     private void BuildUI()
     {
         BackgroundColor = Color.FromArgb("#1a1a2e");
-        Title = "3-mängija turniir";
 
-        _lblPhase = CreateLabel("", 20, true, "#e94560");
-        _lblCurrentPlayer = CreateLabel("", 18);
-        _lblBye = CreateLabel("", 14, false, "#aaaaaa");
+        _lblPhase = new Label
+        {
+            Text = "TURNIIR",
+            FontSize = 24,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Color.FromArgb("#e94560"),
+            HorizontalOptions = LayoutOptions.Center
+        };
 
-        _entryX = CreateEntry("Mängija X nimi");
-        _entryO = CreateEntry("Mängija O nimi");
-        _entryZ = CreateEntry("Mängija Z nimi");
+        _lblCurrentPlayer = new Label
+        {
+            Text = "",
+            FontSize = 20,
+            TextColor = Colors.White,
+            HorizontalOptions = LayoutOptions.Center
+        };
 
-        var btnStart = CreateButton("🏆 Alusta turniiri", "#e94560", OnStartClicked);
-        var btnRestart = CreateButton("🔄 Uus turniir", "#16213e", OnRestartClicked, true);
+        _btnRestart = CreateButton("🔄 Uus turniir", "#16213e", OnRestartClicked);
 
         _gameGrid = new Grid
         {
-            HorizontalOptions = LayoutOptions.Center
+            HeightRequest = 320,
+            WidthRequest = 320,
+            HorizontalOptions = LayoutOptions.Center,
+            RowSpacing = 8,
+            ColumnSpacing = 8
+        };
+
+        var centerLayout = new VerticalStackLayout
+        {
+            Spacing = 16,
+            VerticalOptions = LayoutOptions.Center,
+            HorizontalOptions = LayoutOptions.Center,
+            Children =
+            {
+                _lblPhase,
+                _lblCurrentPlayer,
+                _gameGrid,
+                _btnRestart
+            }
         };
 
         Content = new ScrollView
         {
-            Content = new VerticalStackLayout
+            Content = new Grid
             {
-                Padding = 20,
-                Spacing = 12,
-                Children =
-                {
-                    _lblPhase,
-                    _lblCurrentPlayer,
-                    _lblBye,
-                    CreateForm(),
-                    btnStart,
-                    _gameGrid,
-                    btnRestart
-                }
+                Children = { centerLayout }
             }
         };
     }
 
-    private VerticalStackLayout CreateForm()
-    {
-        return new VerticalStackLayout
-        {
-            Spacing = 8,
-            Children = { _entryX, _entryO, _entryZ }
-        };
-    }
-
-    private static Entry CreateEntry(string placeholder) => new()
-    {
-        Placeholder = placeholder,
-        BackgroundColor = Color.FromArgb("#16213e"),
-        TextColor = Colors.White
-    };
-
-    private static Label CreateLabel(string text, int size, bool bold = false, string? color = null)
-    {
-        return new Label
-        {
-            Text = text,
-            FontSize = size,
-            FontAttributes = bold ? FontAttributes.Bold : FontAttributes.None,
-            TextColor = color != null ? Color.FromArgb(color) : Colors.White,
-            HorizontalOptions = LayoutOptions.Center
-        };
-    }
-
-    private static Button CreateButton(string text, string bg, EventHandler handler, bool bordered = false)
+    private static Button CreateButton(string text, string bg, EventHandler handler)
     {
         var btn = new Button
         {
@@ -113,22 +101,13 @@ public partial class TournamentPage : ContentPage
             BackgroundColor = Color.FromArgb(bg),
             TextColor = Colors.White,
             CornerRadius = 10,
-            HeightRequest = 48,
-            WidthRequest = 230
+            HeightRequest = 48
         };
 
         btn.Clicked += handler;
-
-        if (bordered)
-        {
-            btn.BorderWidth = 1;
-            btn.BorderColor = Color.FromArgb("#e94560");
-        }
-
         return btn;
     }
 
-    // ───────── GAME GRID ─────────
     private void RebuildGrid(int size)
     {
         _gameGrid.Children.Clear();
@@ -137,8 +116,8 @@ public partial class TournamentPage : ContentPage
 
         for (int i = 0; i < size; i++)
         {
-            _gameGrid.RowDefinitions.Add(new RowDefinition());
-            _gameGrid.ColumnDefinitions.Add(new ColumnDefinition());
+            _gameGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+            _gameGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
         }
 
         _cells = new Button[size * size];
@@ -147,10 +126,11 @@ public partial class TournamentPage : ContentPage
         {
             var btn = new Button
             {
-                FontSize = size == 4 ? 28 : 36,
+                FontSize = size == 4 ? 26 : 34,
+                FontAttributes = FontAttributes.Bold,
                 BackgroundColor = Color.FromArgb("#16213e"),
                 TextColor = Colors.White,
-                CornerRadius = 8,
+                CornerRadius = 10,
                 CommandParameter = i
             };
 
@@ -161,18 +141,6 @@ public partial class TournamentPage : ContentPage
         }
     }
 
-    // ───────── ACTIONS ─────────
-    private async void OnStartClicked(object? sender, EventArgs e)
-    {
-        _playerNames["X"] = NormalizeName(_entryX.Text, "Mängija X");
-        _playerNames["O"] = NormalizeName(_entryO.Text, "Mängija O");
-        _playerNames["Z"] = NormalizeName(_entryZ.Text, "Mängija Z");
-
-        _tournament.Start(new List<string> { "X", "O", "Z" });
-
-        await StartPhase();
-    }
-
     private async void OnRestartClicked(object? sender, EventArgs e)
     {
         _tournament.Reset();
@@ -180,55 +148,30 @@ public partial class TournamentPage : ContentPage
 
         _lblPhase.Text = "TURNIIR";
         _lblCurrentPlayer.Text = "";
-        _lblBye.Text = "";
 
-        await Task.CompletedTask;
+        _tournament.Start(new List<string> { "X", "O", "Z" });
+        await StartPhase();
     }
 
-    private string NormalizeName(string? input, string fallback)
-        => string.IsNullOrWhiteSpace(input) ? fallback : input.Trim();
-
-    // ───────── PHASE FLOW ─────────
     private async Task StartPhase()
     {
-        var (pA, pB) = _tournament.GetCurrentMatchPlayers();
+        _game.Reset(_tournament.ActivePlayers, _tournament.BoardSize);
 
-        _game.Reset(pA, _tournament.BoardSize);
         RebuildGrid(_tournament.BoardSize);
 
-        UpdateStatus(pA);
+        UpdateStatus(_game.CurrentPlayer);
 
-        var phase = _tournament.CurrentPhase;
-
-        if (phase == TournamentManager.Phase.Round1)
-        {
-            _lblBye.Text = $"Ootab: {NameOf(_tournament.ByePlayer)}";
-
-            await DisplayAlert("Voor 1",
-                $"{NameOf(pA)} vs {NameOf(pB)}",
-                "OK");
-        }
-        else if (phase == TournamentManager.Phase.Round2)
-        {
-            _lblBye.Text = "";
-
-            await DisplayAlert("Voor 2",
-                $"{NameOf(pA)} vs {NameOf(pB)}",
-                "OK");
-        }
-        else if (phase == TournamentManager.Phase.Final)
-        {
-            await DisplayAlert("Finaal",
-                $"{NameOf(pA)} vs {NameOf(pB)}",
-                "OK");
-        }
+        if (_tournament.CurrentPhase == TournamentManager.Phase.Round1)
+            _lblPhase.Text = "VOOR 1 (4×4)";
+        else if (_tournament.CurrentPhase == TournamentManager.Phase.Round2)
+            _lblPhase.Text = "VOOR 2 (3×3)";
+        else if (_tournament.CurrentPhase == TournamentManager.Phase.Final)
+            _lblPhase.Text = "FINAAL (3×3)";
     }
 
-    // ───────── CLICK HANDLER ─────────
     private async void OnCellClicked(object? sender, EventArgs e)
     {
-        if (_tournament.CurrentPhase is TournamentManager.Phase.NotStarted
-            or TournamentManager.Phase.Finished)
+        if (_tournament.CurrentPhase == TournamentManager.Phase.Finished)
             return;
 
         var btn = (Button)sender!;
@@ -240,63 +183,57 @@ public partial class TournamentPage : ContentPage
         SetCell(btn, _game.CurrentPlayer);
 
         var result = _game.CheckResult();
+
         if (result != null)
         {
             await HandleResult(result);
             return;
         }
 
-        _game.SwitchPlayer();
+        _game.SwitchPlayer_1();
         UpdateStatus(_game.CurrentPlayer);
     }
 
-    // ───────── RESULT ─────────
     private async Task HandleResult(string result)
     {
         if (result == "Draw")
         {
-            await DisplayAlert("Viik", "Mängitakse uuesti", "OK");
+            await DisplayAlertAsync("Viik", "Voori kordus", "OK");
             await StartPhase();
             return;
         }
 
         _tournament.RegisterResult(result);
 
+      
         if (_tournament.CurrentPhase == TournamentManager.Phase.Finished)
         {
-            await ShowResults();
+            await DisplayAlertAsync("Tulemused",
+                $"🥇 {NameOf(_tournament.First)}\n" +
+                $"🥈 {NameOf(_tournament.Second)}\n" +
+                $"🥉 {NameOf(_tournament.Third)}",
+                "OK");
             return;
         }
 
-        await DisplayAlert("Voor lõppenud", $"{NameOf(result)} võitis", "OK");
+        await DisplayAlertAsync("Voor lõppenud", "Järgmine voor algab", "OK");
+
         await StartPhase();
     }
 
-    private async Task ShowResults()
+    private void UpdateStatus(string current)
     {
-        string text =
-            $"🥇 {NameOf(_tournament.First)}\n" +
-            $"🥈 {NameOf(_tournament.Second)}\n" +
-            $"🥉 {NameOf(_tournament.Third)}";
-
-        _lblPhase.Text = "LÕPP";
-
-        await DisplayAlert("Tulemused", text, "OK");
-    }
-
-    // ───────── UI HELPERS ─────────
-    private void UpdateStatus(string currentPlayer)
-    {
-        _lblPhase.Text = _tournament.PhaseLabel().ToUpper();
-        _lblCurrentPlayer.Text = $"Käib: {NameOf(currentPlayer)} ({currentPlayer})";
+        _lblCurrentPlayer.Text = $"Käik: {NameOf(current)} ({current})";
     }
 
     private void SetCell(Button btn, string symbol)
     {
         btn.Text = symbol;
-        btn.TextColor = SymbolColors.TryGetValue(symbol, out var c) ? c : Colors.White;
+        btn.TextColor = SymbolColors.ContainsKey(symbol)
+            ? SymbolColors[symbol]
+            : Colors.White;
     }
 
     private string NameOf(string symbol)
-        => _playerNames.TryGetValue(symbol, out var name) ? name : symbol;
+        => _playerNames.ContainsKey(symbol) ? _playerNames[symbol] : symbol;
 }

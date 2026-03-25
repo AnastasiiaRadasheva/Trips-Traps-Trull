@@ -11,7 +11,7 @@ public partial class RulesPage : ContentPage
 
         var title = new Label
         {
-            Text = "📜 Mängureeglid",
+            Text = " Mängureeglid",
             FontSize = 28,
             FontAttributes = FontAttributes.Bold,
             TextColor = Colors.White,
@@ -44,7 +44,6 @@ public partial class RulesPage : ContentPage
             }
         };
 
-        // --- БЛОК: КАК ИГРАТЬ С БОТОМ ---
         var botTitle = new Label
         {
             Text = "Kuidas mängida botiga",
@@ -65,7 +64,7 @@ public partial class RulesPage : ContentPage
                 Spacing = 10,
                 Children =
                 {
-                    new Label { Text = "▶️ Kuidas alustada", FontSize = 18, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#e94560") },
+                    new Label { Text = " Kuidas alustada", FontSize = 18, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#e94560") },
                     new Label { Text = "Vajuta nuppu 'Sina vs Bot' — see lülitab boti sisse. Nupp muutub punaseks.", FontSize = 15, TextColor = Colors.White },
                     new Label { Text = "Sina mängid alati X-ga, bot mängib O-ga.", FontSize = 15, TextColor = Colors.White },
 
@@ -81,7 +80,44 @@ public partial class RulesPage : ContentPage
                 }
             }
         };
+        var tournamentTitle = new Label
+        {
+            Text = "🏆 Turniir",
+            FontSize = 24,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Colors.White,
+            HorizontalOptions = LayoutOptions.Center
+        };
 
+        var tournamentFrame = new Border
+        {
+            BackgroundColor = Color.FromArgb("#16213e"),
+            StrokeShape = new RoundRectangle { CornerRadius = 12 },
+            Stroke = Color.FromArgb("#e94560"),
+            Padding = new Thickness(20),
+            Content = new VerticalStackLayout
+            {
+                Spacing = 10,
+                Children =
+        {
+            new Label { Text = " Kuidas alustada", FontSize = 18, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#e94560") },
+            new Label { Text = "Vali peamenüüst 'Turniir (3 mängijat)' — mäng algab automaatselt.", FontSize = 15, TextColor = Colors.White },
+
+            new Label { Text = " Mängu kulg", FontSize = 18, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#e94560"), Margin = new Thickness(0, 10, 0, 0) },
+            new Label { Text = "• Mängijad X, O ja Z mängivad kordamööda.", FontSize = 15, TextColor = Colors.White },
+            new Label { Text = "• Igas voorus mängitakse uus mäng (4×4 või 3×3).", FontSize = 15, TextColor = Colors.White },
+            new Label { Text = "• Võitja saab edasi järgmisse vooru.", FontSize = 15, TextColor = Colors.White },
+
+            new Label { Text = " Voorud", FontSize = 18, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#e94560"), Margin = new Thickness(0, 10, 0, 0) },
+            new Label { Text = "• Voor 1 — 4×4 laud", FontSize = 15, TextColor = Colors.White },
+            new Label { Text = "• Voor 2 — 3×3 laud", FontSize = 15, TextColor = Colors.White },
+            new Label { Text = "• Finaal — 3×3 laud", FontSize = 15, TextColor = Colors.White },
+
+            new Label { Text = " Lõpp", FontSize = 18, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#e94560"), Margin = new Thickness(0, 10, 0, 0) },
+            new Label { Text = "Turniiri lõpus kuvatakse esikolmik (🥇🥈🥉).", FontSize = 15, TextColor = Colors.White },
+        }
+            }
+        };
         var btnBack = new Button
         {
             Text = "← Tagasi",
@@ -99,7 +135,7 @@ public partial class RulesPage : ContentPage
             Content = new VerticalStackLayout
             {
                 Spacing = 16,
-                Children = { title, rulesFrame, botTitle, botFrame, btnBack }
+                Children = { title, rulesFrame, botTitle, botFrame, tournamentTitle, tournamentFrame, btnBack }
             }
         };
     }

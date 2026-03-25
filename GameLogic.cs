@@ -1,8 +1,10 @@
 ﻿namespace TTT;
 
 /// <summary>
-/// Supports both 3×3 (classic) and 4×4 (tournament) boards.
-/// Win condition for 4×4: 4 in a row.
+/// Supports both:
+/// - 2 players (classic X/O)
+/// - 3 players (tournament X/O/Z)
+/// Works for 3×3 and 4×4 boards.
 /// </summary>
 public class GameLogic
 {
@@ -14,11 +16,12 @@ public class GameLogic
     public string CurrentPlayer { get; private set; } = "X";
     public bool GameOver { get; private set; } = false;
 
-    // Pre-computed win combinations for current board size
+    // NEW: multi-player support
+    public List<string> Players { get; private set; } = new() { "X", "O" };
+    private int _turnIndex = 0;
+
     private int[][] _winCombinations = Array.Empty<int[]>();
 
-    // ──────────────────────────────────────────────
-    // Constructor / init
     // ──────────────────────────────────────────────
     public GameLogic(int size = 3) => InitBoard(size);
 
@@ -31,13 +34,10 @@ public class GameLogic
     }
 
     // ──────────────────────────────────────────────
-    // Win combination builder (works for 3 and 4)
-    // ──────────────────────────────────────────────
     private static int[][] BuildWinCombinations(int n)
     {
         var combos = new List<int[]>();
 
-        // Rows
         for (int r = 0; r < n; r++)
         {
             var row = new int[n];
@@ -45,7 +45,6 @@ public class GameLogic
             combos.Add(row);
         }
 
-        // Columns
         for (int c = 0; c < n; c++)
         {
             var col = new int[n];
@@ -53,12 +52,10 @@ public class GameLogic
             combos.Add(col);
         }
 
-        // Main diagonal
         var diag1 = new int[n];
         for (int i = 0; i < n; i++) diag1[i] = i * n + i;
         combos.Add(diag1);
 
-        // Anti-diagonal
         var diag2 = new int[n];
         for (int i = 0; i < n; i++) diag2[i] = i * n + (n - 1 - i);
         combos.Add(diag2);
@@ -66,8 +63,6 @@ public class GameLogic
         return combos.ToArray();
     }
 
-    // ──────────────────────────────────────────────
-    // Game actions
     // ──────────────────────────────────────────────
     public bool MakeMove(int index)
     {
@@ -84,6 +79,7 @@ public class GameLogic
         {
             string first = Board[combo[0]];
             if (string.IsNullOrEmpty(first)) continue;
+
             if (combo.All(i => Board[i] == first))
             {
                 GameOver = true;
@@ -100,24 +96,58 @@ public class GameLogic
         return null;
     }
 
+    // ──────────────────────────────────────────────
+    // OLD (оставляем!)
     public void SwitchPlayer() =>
         CurrentPlayer = CurrentPlayer == "X" ? "O" : "X";
+
+    // NEW (для 3 игроков)
+    public void NextTurn()
+    {
+        _turnIndex++;
+        CurrentPlayer = Players[_turnIndex % Players.Count];
+    }
 
     public void SwitchPlayerTo(string next) =>
         CurrentPlayer = next;
 
+    // OLD reset (оставляем!)
     public void Reset(string startingPlayer = "X", int? size = null)
     {
         InitBoard(size ?? Size);
-        CurrentPlayer = startingPlayer;
+
+        Players = new List<string> { "X", "O" };
+        _turnIndex = Players.IndexOf(startingPlayer);
+        if (_turnIndex < 0) _turnIndex = 0;
+
+        CurrentPlayer = Players[_turnIndex];
+    }
+    public void SwitchPlayer_1()
+    {
+        _turnIndex++;
+        CurrentPlayer = Players[_turnIndex % Players.Count];
+    }
+    // NEW reset (для турнира)
+    public void Reset(List<string> players, int size)
+    {
+        InitBoard(size);
+
+        Players = new List<string>(players);
+        _turnIndex = 0;
+        CurrentPlayer = Players[0];
     }
 
     public string RandomStartPlayer()
     {
-        CurrentPlayer = new Random().Next(2) == 0 ? "X" : "O";
+        var rnd = new Random();
+        _turnIndex = rnd.Next(Players.Count);
+        CurrentPlayer = Players[_turnIndex];
         return CurrentPlayer;
     }
 
-    // Useful for multi-symbol tournaments (X / O / Z)
-    public void SetCurrentPlayer(string player) => CurrentPlayer = player;
+    public void SetCurrentPlayer(string player)
+    {
+        CurrentPlayer = player;
+        _turnIndex = Players.IndexOf(player);
+    }
 }

@@ -135,7 +135,7 @@ private int _turnNumber = 0;
 
         var btn3inim = new Button
         {
-            Text = "  Kes alustab?",
+            Text = " TURNIR(3 inimesed)",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -163,7 +163,7 @@ private int _turnNumber = 0;
 
         var btnToggleBot = new Button
         {
-            Text = "Mängija  vs Bot",
+            Text = "Mängija  vs Bot (2 mäng)",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
