@@ -350,7 +350,6 @@ _turnNumber++;
         _randomStartUses++;
         UpdateRandomStartButton();
 
-        // Определяем кто начинает
         var rnd = new Random();
         string starter = rnd.Next(2) == 0 ? PlayerSymbol : BotSymbol;
         _forcedStarter = starter;
@@ -359,9 +358,8 @@ _turnNumber++;
             ? "Bot alustab! ⚡"
             : $"Alustab mängija {starter}!";
 
-        await DisplayAlertAsync("🎲 Loosimine!", msg, "OK");
+        await DisplayAlertAsync("Loosimine!", msg, "OK");
 
-        // Сбрасываем доску с новым стартовым игроком
         await ResetBoardKeepUses(starter);
     }
     private async Task ResetBoardKeepUses(string startingPlayer)
@@ -448,7 +446,7 @@ _turnNumber++;
         _randomStartUses = 0;
         UpdateRandomStartButton();
 
-        _btnRandomStart.IsEnabled = true; // 🔵 включаем кнопку снова
+        _btnRandomStart.IsEnabled = true; 
 
         _turnNumber = 0;
 

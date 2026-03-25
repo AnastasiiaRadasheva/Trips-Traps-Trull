@@ -7,6 +7,7 @@ public class BotLogic
     public int ManualDifficulty { get; set; } = -1;
 
     private int[] _playerMoveFrequency = new int[9];
+
     private int[][] _playerMoveByTurn = new int[9][];
 
     private readonly int[] _currentGameMoves = new int[9];
@@ -184,13 +185,8 @@ public class BotLogic
         return 1.0;
     }
 
-    // ──────────────────────────────────────────────
-    // Запись ходов и результата игры
-    // ──────────────────────────────────────────────
-
     public void RecordPlayerMove(int index, int turnNumber = -1)
     {
-        // Просто буферизуем ход текущей игры — в Preferences не пишем
         if (_currentGameMoveCount < 9)
             _currentGameMoves[_currentGameMoveCount++] = index;
     }
@@ -206,11 +202,9 @@ public class BotLogic
 
     private void ApplyCurrentGameToMemory()
     {
-        // Загружаем историю последних игр
         string history = Preferences.Get("bot_move_history", "");
         var games = history.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
 
-        // Добавляем текущую игру как строку "0,4,2,6,..."
         string newGame = string.Join(",", _currentGameMoves.Take(_currentGameMoveCount));
         if (!string.IsNullOrEmpty(newGame))
             games.Add(newGame);

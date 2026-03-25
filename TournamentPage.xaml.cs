@@ -295,4 +295,4 @@ public partial class TournamentPage : ContentPage
 
     private string NameOf(string symbol) =>
         _playerNames.ContainsKey(symbol) ? _playerNames[symbol] : symbol;
-}
+}ёё
