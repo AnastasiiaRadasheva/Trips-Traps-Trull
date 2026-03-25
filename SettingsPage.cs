@@ -11,7 +11,7 @@ public partial class SettingsPage : ContentPage
 
         var title = new Label
         {
-            Text = "Seaded",
+            Text = "⚙️ Seaded",
             FontSize = 30,
             FontAttributes = FontAttributes.Bold,
             TextColor = Colors.White,
@@ -37,7 +37,7 @@ public partial class SettingsPage : ContentPage
 
         var btnResetPvP = new Button
         {
-            Text = "Lähtesta PvP statistika",
+            Text = "🧑 Lähtesta PvP statistika",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -50,7 +50,7 @@ public partial class SettingsPage : ContentPage
 
         var btnResetBotStats = new Button
         {
-            Text = "Lähtesta bot statistika",
+            Text = "🤖 Lähtesta bot statistika",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -63,7 +63,7 @@ public partial class SettingsPage : ContentPage
 
         var btnResetBotLevel = new Button
         {
-            Text = "Lähtesta boti tase",
+            Text = "🧠 Lähtesta boti tase",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -73,9 +73,10 @@ public partial class SettingsPage : ContentPage
             BorderWidth = 1
         };
         btnResetBotLevel.Clicked += OnResetBotLevelClicked;
+
         var btnResetHistory = new Button
         {
-            Text = "Lähtesta turniiri ajalugu",
+            Text = "🏆 Lähtesta turniiri ajalugu",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -85,6 +86,7 @@ public partial class SettingsPage : ContentPage
             BorderWidth = 1
         };
         btnResetHistory.Clicked += OnResetHistoryClicked;
+
         var statsFrame = new Border
         {
             BackgroundColor = Color.FromArgb("#16213e"),
@@ -132,77 +134,42 @@ public partial class SettingsPage : ContentPage
             }
         };
     }
-    private async void OnResetHistoryClicked(object? sender, EventArgs e)
-    {
-        bool confirm = await DisplayAlertAsync(
-            "Kinnita",
-            "Kas kustutada turniiri ajalugu?",
-            "Jah",
-            "Ei");
 
-        if (confirm)
-        {
-            Preferences.Remove("game_history");
-            await DisplayAlertAsync("✅", "Turniiri ajalugu kustutatud!", "OK");
-        }
-    }
-    private async void OnResetPvPStatsClicked(object? sender, EventArgs e)
+    private async Task ResetPreferences(string confirmMsg, string successMsg, params string[] keys)
     {
-        bool confirm = await DisplayAlertAsync(
-            "Kinnita",
+        bool confirm = await DisplayAlertAsync("Kinnita", confirmMsg, "Jah", "Ei");
+        if (!confirm) return;
+
+        foreach (var key in keys)
+            Preferences.Remove(key);
+
+        await DisplayAlertAsync("✅", successMsg, "OK");
+    }
+
+    private async void OnResetPvPStatsClicked(object? sender, EventArgs e) =>
+        await ResetPreferences(
             "Kas kustutada PvP statistika?",
-            "Jah",
-            "Ei");
+            "PvP statistika kustutatud!",
+            "wins_x_pvp", "wins_o_pvp", "draws_pvp");
 
-        if (confirm)
-        {
-            Preferences.Remove("wins_x_pvp");
-            Preferences.Remove("wins_o_pvp");
-            Preferences.Remove("draws_pvp");
-
-            await DisplayAlertAsync("✅", "PvP statistika kustutatud!", "OK");
-        }
-    }
-
-    private async void OnResetBotStatsClicked(object? sender, EventArgs e)
-    {
-        bool confirm = await DisplayAlertAsync(
-            "Kinnita",
+    private async void OnResetBotStatsClicked(object? sender, EventArgs e) =>
+        await ResetPreferences(
             "Kas kustutada bot statistika?",
-            "Jah",
-            "Ei");
+            "Bot statistika kustutatud!",
+            "wins_x_bot", "wins_o_bot", "draws_bot");
 
-        if (confirm)
-        {
-            Preferences.Remove("wins_x_bot");
-            Preferences.Remove("wins_o_bot");
-            Preferences.Remove("draws_bot");
-
-            await DisplayAlertAsync("✅", "Bot statistika kustutatud!", "OK");
-        }
-    }
-
-    private async void OnResetBotLevelClicked(object? sender, EventArgs e)
-    {
-        bool confirm = await DisplayAlertAsync(
-            "Kinnita",
+    private async void OnResetBotLevelClicked(object? sender, EventArgs e) =>
+        await ResetPreferences(
             "Kas lähtestada boti tase ja mälu?",
-            "Jah",
-            "Ei");
+            "Boti tase lähtestatud!",
+            "bot_move_history", "bot_games_played");
 
-        if (confirm)
-        {
-            Preferences.Remove("bot_games_played");
+    private async void OnResetHistoryClicked(object? sender, EventArgs e) =>
+        await ResetPreferences(
+            "Kas kustutada turniiri ajalugu?",
+            "Turniiri ajalugu kustutatud!",
+            "game_history");
 
-            for (int i = 0; i < 9; i++)
-                Preferences.Remove($"bot_memory_{i}");
-
-            await DisplayAlertAsync("✅", "Boti tase lähtestatud!", "OK");
-        }
-    }
-
-    private async void OnBackClicked(object? sender, EventArgs e)
-    {
+    private async void OnBackClicked(object? sender, EventArgs e) =>
         await Navigation.PopAsync();
-    }
 }

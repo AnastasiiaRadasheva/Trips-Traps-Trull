@@ -1,28 +1,17 @@
 ﻿namespace TTT;
 
-/// <summary>
-/// Supports both:
-/// - 2 players (classic X/O)
-/// - 3 players (tournament X/O/Z)
-/// Works for 3×3 and 4×4 boards.
-/// </summary>
 public class GameLogic
 {
-    // ──────────────────────────────────────────────
-    // State
-    // ──────────────────────────────────────────────
     public int Size { get; private set; } = 3;
     public string[] Board { get; private set; } = new string[9];
     public string CurrentPlayer { get; private set; } = "X";
     public bool GameOver { get; private set; } = false;
 
-    // NEW: multi-player support
     public List<string> Players { get; private set; } = new() { "X", "O" };
     private int _turnIndex = 0;
 
     private int[][] _winCombinations = Array.Empty<int[]>();
 
-    // ──────────────────────────────────────────────
     public GameLogic(int size = 3) => InitBoard(size);
 
     private void InitBoard(int size)
@@ -33,7 +22,6 @@ public class GameLogic
         GameOver = false;
     }
 
-    // ──────────────────────────────────────────────
     private static int[][] BuildWinCombinations(int n)
     {
         var combos = new List<int[]>();
@@ -63,7 +51,6 @@ public class GameLogic
         return combos.ToArray();
     }
 
-    // ──────────────────────────────────────────────
     public bool MakeMove(int index)
     {
         if (GameOver || index < 0 || index >= Board.Length || !string.IsNullOrEmpty(Board[index]))
@@ -96,13 +83,12 @@ public class GameLogic
         return null;
     }
 
-    // ──────────────────────────────────────────────
-    // OLD (оставляем!)
+    // 2-player switch (used in main.cs)
     public void SwitchPlayer() =>
         CurrentPlayer = CurrentPlayer == "X" ? "O" : "X";
 
-    // NEW (для 3 игроков)
-    public void NextTurn()
+    // Multi-player switch (used in TournamentPage)
+    public void SwitchPlayer_1()
     {
         _turnIndex++;
         CurrentPlayer = Players[_turnIndex % Players.Count];
@@ -111,7 +97,7 @@ public class GameLogic
     public void SwitchPlayerTo(string next) =>
         CurrentPlayer = next;
 
-    // OLD reset (оставляем!)
+    // 2-player reset (used in main.cs)
     public void Reset(string startingPlayer = "X", int? size = null)
     {
         InitBoard(size ?? Size);
@@ -122,12 +108,8 @@ public class GameLogic
 
         CurrentPlayer = Players[_turnIndex];
     }
-    public void SwitchPlayer_1()
-    {
-        _turnIndex++;
-        CurrentPlayer = Players[_turnIndex % Players.Count];
-    }
-    // NEW reset (для турнира)
+
+    // Tournament reset (used in TournamentPage)
     public void Reset(List<string> players, int size)
     {
         InitBoard(size);

@@ -10,7 +10,6 @@ public partial class TournamentPage : ContentPage
 
     private Label _lblPhase = null!;
     private Label _lblCurrentPlayer = null!;
-
     private Button _btnRestart = null!;
 
     private readonly Dictionary<string, string> _playerNames = new()
@@ -42,7 +41,6 @@ public partial class TournamentPage : ContentPage
     {
         BackgroundColor = Color.FromArgb("#1a1a2e");
 
-        // ✅ TOP BUTTONS (сначала создаём)
         var btnStats = new Button
         {
             Text = "📊",
@@ -92,10 +90,9 @@ public partial class TournamentPage : ContentPage
             Children = { btnStats, btnRules, btnSettings }
         };
 
-        // остальные элементы
         _lblPhase = new Label
         {
-            Text = "2 inimene",
+            Text = "TURNIIR",
             FontSize = 24,
             FontAttributes = FontAttributes.Bold,
             TextColor = Color.FromArgb("#e94560"),
@@ -121,27 +118,20 @@ public partial class TournamentPage : ContentPage
             ColumnSpacing = 8
         };
 
- 
-        var centerLayout = new VerticalStackLayout
-        {
-            Spacing = 16,
-            VerticalOptions = LayoutOptions.Center,
-            HorizontalOptions = LayoutOptions.Center,
-            Children =
-        {
-            topButtons, // ✅ ВОТ ТУТ ВСТАВЛЯЕМ
-            _lblPhase,
-            _lblCurrentPlayer,
-            _gameGrid,
-            _btnRestart
-        }
-        };
-
         Content = new ScrollView
         {
             Content = new Grid
             {
-                Children = { centerLayout }
+                Children =
+                {
+                    new VerticalStackLayout
+                    {
+                        Spacing = 16,
+                        VerticalOptions = LayoutOptions.Center,
+                        HorizontalOptions = LayoutOptions.Center,
+                        Children = { topButtons, _lblPhase, _lblCurrentPlayer, _gameGrid, _btnRestart }
+                    }
+                }
             }
         };
     }
@@ -156,7 +146,6 @@ public partial class TournamentPage : ContentPage
             CornerRadius = 10,
             HeightRequest = 48
         };
-
         btn.Clicked += handler;
         return btn;
     }
@@ -186,9 +175,7 @@ public partial class TournamentPage : ContentPage
                 CornerRadius = 10,
                 CommandParameter = i
             };
-
             btn.Clicked += OnCellClicked;
-
             _cells[i] = btn;
             _gameGrid.Add(btn, i % size, i / size);
         }
@@ -198,10 +185,8 @@ public partial class TournamentPage : ContentPage
     {
         _tournament.Reset();
         _gameGrid.Children.Clear();
-
         _lblPhase.Text = "TURNIIR";
         _lblCurrentPlayer.Text = "";
-
         _tournament.Start(new List<string> { "X", "O", "Z" });
         await StartPhase();
     }
@@ -209,17 +194,16 @@ public partial class TournamentPage : ContentPage
     private async Task StartPhase()
     {
         _game.Reset(_tournament.ActivePlayers, _tournament.BoardSize);
-
         RebuildGrid(_tournament.BoardSize);
-
         UpdateStatus(_game.CurrentPlayer);
 
-        if (_tournament.CurrentPhase == TournamentManager.Phase.Round1)
-            _lblPhase.Text = "VOOR 1 (4×4)";
-        else if (_tournament.CurrentPhase == TournamentManager.Phase.Round2)
-            _lblPhase.Text = "VOOR 2 (3×3)";
-        else if (_tournament.CurrentPhase == TournamentManager.Phase.Final)
-            _lblPhase.Text = "FINAAL (3×3)";
+        _lblPhase.Text = _tournament.CurrentPhase switch
+        {
+            TournamentManager.Phase.Round1 => "VOOR 1 (4×4)",
+            TournamentManager.Phase.Round2 => "VOOR 2 (3×3)",
+            TournamentManager.Phase.Final => "FINAAL (3×3)",
+            _ => _lblPhase.Text
+        };
     }
 
     private async void OnCellClicked(object? sender, EventArgs e)
@@ -236,7 +220,6 @@ public partial class TournamentPage : ContentPage
         SetCell(btn, _game.CurrentPlayer);
 
         var result = _game.CheckResult();
-
         if (result != null)
         {
             await HandleResult(result);
@@ -250,7 +233,6 @@ public partial class TournamentPage : ContentPage
     private void SaveTournamentResult()
     {
         string key = "game_history";
-
         string history = Preferences.Get(key, "");
 
         string entry =
@@ -260,19 +242,14 @@ public partial class TournamentPage : ContentPage
             $"🥉 {NameOf(_tournament.Third)}";
 
         var list = history.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
-
         list.Insert(0, entry);
-
-        if (list.Count > 10)
-            list = list.Take(10).ToList();
+        if (list.Count > 10) list = list.Take(10).ToList();
 
         Preferences.Set(key, string.Join("|", list));
     }
 
     private async Task HandleResult(string result)
     {
-        // Убрали: SaveGameToHistory(result)
-
         if (result == "Draw")
         {
             await DisplayAlertAsync("Viik", "Voori kordus", "OK");
@@ -285,13 +262,11 @@ public partial class TournamentPage : ContentPage
         if (_tournament.CurrentPhase == TournamentManager.Phase.Finished)
         {
             SaveTournamentResult();
-
             await DisplayAlertAsync("Tulemused",
                 $"🥇 {NameOf(_tournament.First)}\n" +
                 $"🥈 {NameOf(_tournament.Second)}\n" +
                 $"🥉 {NameOf(_tournament.Third)}",
                 "OK");
-            ResetBoardTournament();
             await StartPhase();
             return;
         }
@@ -299,29 +274,18 @@ public partial class TournamentPage : ContentPage
         await DisplayAlertAsync("Voor lõppenud", "Järgmine voor algab", "OK");
         await StartPhase();
     }
-    private void ResetBoardTournament()
-    {
-        foreach (var cell in _cells)
-        {
-            cell.Text = string.Empty;
-            cell.BackgroundColor = Color.FromArgb("#16213e");
-        }
-    }
-    private void UpdateStatus(string current)
-    {
+
+    private void UpdateStatus(string current) =>
         _lblCurrentPlayer.Text = $"Käik: {NameOf(current)} ({current})";
-    }
 
     private void SetCell(Button btn, string symbol)
     {
         btn.Text = symbol;
-        btn.TextColor = SymbolColors.ContainsKey(symbol)
-            ? SymbolColors[symbol]
-            : Colors.White;
+        btn.TextColor = SymbolColors.ContainsKey(symbol) ? SymbolColors[symbol] : Colors.White;
     }
 
     private async void OnStatsClicked(object? sender, EventArgs e) =>
-    await Navigation.PushAsync(new StatsPage());
+        await Navigation.PushAsync(new StatsPage());
 
     private async void OnRulesClicked(object? sender, EventArgs e) =>
         await Navigation.PushAsync(new RulesPage());
@@ -329,7 +293,6 @@ public partial class TournamentPage : ContentPage
     private async void OnSettingsClicked(object? sender, EventArgs e) =>
         await Navigation.PushAsync(new SettingsPage());
 
-
-    private string NameOf(string symbol)
-        => _playerNames.ContainsKey(symbol) ? _playerNames[symbol] : symbol;
+    private string NameOf(string symbol) =>
+        _playerNames.ContainsKey(symbol) ? _playerNames[symbol] : symbol;
 }

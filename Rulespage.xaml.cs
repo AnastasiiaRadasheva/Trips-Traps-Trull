@@ -82,7 +82,7 @@ public partial class RulesPage : ContentPage
         };
         var tournamentTitle = new Label
         {
-            Text = "🏆 Turniir",
+            Text = "Turniir",
             FontSize = 24,
             FontAttributes = FontAttributes.Bold,
             TextColor = Colors.White,
