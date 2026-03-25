@@ -11,7 +11,7 @@ public partial class SettingsPage : ContentPage
 
         var title = new Label
         {
-            Text = "⚙️ Seaded",
+            Text = "Seaded",
             FontSize = 30,
             FontAttributes = FontAttributes.Bold,
             TextColor = Colors.White,
@@ -37,7 +37,7 @@ public partial class SettingsPage : ContentPage
 
         var btnResetPvP = new Button
         {
-            Text = "🧑 Lähtesta PvP statistika",
+            Text = "Lähtesta PvP statistika",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -50,7 +50,7 @@ public partial class SettingsPage : ContentPage
 
         var btnResetBotStats = new Button
         {
-            Text = "🤖 Lähtesta bot statistika",
+            Text = "Lähtesta bot statistika",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -63,7 +63,7 @@ public partial class SettingsPage : ContentPage
 
         var btnResetBotLevel = new Button
         {
-            Text = "🧠 Lähtesta boti tase",
+            Text = "Lähtesta boti tase",
             FontSize = 16,
             BackgroundColor = Color.FromArgb("#16213e"),
             TextColor = Colors.White,
@@ -73,7 +73,18 @@ public partial class SettingsPage : ContentPage
             BorderWidth = 1
         };
         btnResetBotLevel.Clicked += OnResetBotLevelClicked;
-
+        var btnResetHistory = new Button
+        {
+            Text = "Lähtesta turniiri ajalugu",
+            FontSize = 16,
+            BackgroundColor = Color.FromArgb("#16213e"),
+            TextColor = Colors.White,
+            CornerRadius = 10,
+            HeightRequest = 48,
+            BorderColor = Color.FromArgb("#e94560"),
+            BorderWidth = 1
+        };
+        btnResetHistory.Clicked += OnResetHistoryClicked;
         var statsFrame = new Border
         {
             BackgroundColor = Color.FromArgb("#16213e"),
@@ -89,7 +100,8 @@ public partial class SettingsPage : ContentPage
                     statsDesc,
                     btnResetPvP,
                     btnResetBotStats,
-                    btnResetBotLevel
+                    btnResetBotLevel,
+                    btnResetHistory
                 }
             }
         };
@@ -120,7 +132,20 @@ public partial class SettingsPage : ContentPage
             }
         };
     }
+    private async void OnResetHistoryClicked(object? sender, EventArgs e)
+    {
+        bool confirm = await DisplayAlertAsync(
+            "Kinnita",
+            "Kas kustutada turniiri ajalugu?",
+            "Jah",
+            "Ei");
 
+        if (confirm)
+        {
+            Preferences.Remove("game_history");
+            await DisplayAlertAsync("✅", "Turniiri ajalugu kustutatud!", "OK");
+        }
+    }
     private async void OnResetPvPStatsClicked(object? sender, EventArgs e)
     {
         bool confirm = await DisplayAlertAsync(

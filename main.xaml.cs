@@ -6,6 +6,7 @@ private int _turnNumber = 0;
     private readonly GameLogic _game = new GameLogic();
     private readonly BotLogic _bot = new BotLogic();
     private readonly Button[] _cells = new Button[9];
+    private string? _forcedStarter;
     private Button _btnRandomStart = null!;
     private int _randomStartUses = 0;
     private const int MaxRandomStarts = 3;
@@ -333,7 +334,10 @@ _turnNumber++;
             await Shell.Current.GoToAsync("..");
     }
 
-    private async void OnNewGameClicked(object? sender, EventArgs e) => await ResetBoard();
+    private async void OnNewGameClicked(object? sender, EventArgs e)
+    {
+        await ResetBoard(_forcedStarter);
+    }
 
     private async void OnRandomStartClicked(object? sender, EventArgs e)
     {
@@ -346,16 +350,37 @@ _turnNumber++;
         _randomStartUses++;
         UpdateRandomStartButton();
 
-        string starter = _game.RandomStartPlayer();
+        // Определяем кто начинает
+        var rnd = new Random();
+        string starter = rnd.Next(2) == 0 ? PlayerSymbol : BotSymbol;
+        _forcedStarter = starter;
 
         string msg = _isBotMode && starter == BotSymbol
             ? "Bot alustab! ⚡"
             : $"Alustab mängija {starter}!";
 
         await DisplayAlertAsync("🎲 Loosimine!", msg, "OK");
-        _lblCurrentPlayer.Text = $"Käib: {_game.CurrentPlayer}";
-    }
 
+        // Сбрасываем доску с новым стартовым игроком
+        await ResetBoardKeepUses(starter);
+    }
+    private async Task ResetBoardKeepUses(string startingPlayer)
+    {
+        _turnNumber = 0;
+
+        _game.Reset(startingPlayer);
+
+        foreach (var cell in _cells)
+        {
+            cell.Text = string.Empty;
+            cell.BackgroundColor = Color.FromArgb("#16213e");
+        }
+
+        _lblCurrentPlayer.Text = $"Käib: {startingPlayer}";
+
+        if (_isBotMode && startingPlayer == BotSymbol)
+            await MakeBotMove();
+    }
     private async void OnToggleBotClicked(object? sender, EventArgs e)
     {
         _isBotMode = !_isBotMode;
@@ -378,7 +403,7 @@ _turnNumber++;
             _pickerDifficulty.IsVisible = false;
         }
 
-        await ResetBoard();
+        await ResetBoard(_forcedStarter);
     }
 
     private void OnDifficultyChanged(object? sender, EventArgs e)
@@ -419,6 +444,7 @@ _turnNumber++;
 
     private async Task ResetBoard(string? startingPlayer = null)
     {
+        _forcedStarter = null;
         _randomStartUses = 0;
         UpdateRandomStartButton();
 
@@ -426,14 +452,17 @@ _turnNumber++;
 
         _turnNumber = 0;
 
-        if (_isBotMode && startingPlayer == null)
+        if (startingPlayer == null)
         {
-            var rnd = new Random();
-            startingPlayer = rnd.Next(2) == 0 ? PlayerSymbol : BotSymbol;
-        }
-        else
-        {
-            startingPlayer ??= "X";
+            if (_isBotMode)
+            {
+                var rnd = new Random();
+                startingPlayer = rnd.Next(2) == 0 ? PlayerSymbol : BotSymbol;
+            }
+            else
+            {
+                startingPlayer = "X";
+            }
         }
 
         _game.Reset(startingPlayer);

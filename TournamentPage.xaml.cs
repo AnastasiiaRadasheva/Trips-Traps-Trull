@@ -247,8 +247,32 @@ public partial class TournamentPage : ContentPage
         UpdateStatus(_game.CurrentPlayer);
     }
 
+    private void SaveTournamentResult()
+    {
+        string key = "game_history";
+
+        string history = Preferences.Get(key, "");
+
+        string entry =
+            $"{DateTime.Now:dd.MM HH:mm}\n" +
+            $"🥇 {NameOf(_tournament.First)}\n" +
+            $"🥈 {NameOf(_tournament.Second)}\n" +
+            $"🥉 {NameOf(_tournament.Third)}";
+
+        var list = history.Split('|', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+        list.Insert(0, entry);
+
+        if (list.Count > 10)
+            list = list.Take(10).ToList();
+
+        Preferences.Set(key, string.Join("|", list));
+    }
+
     private async Task HandleResult(string result)
     {
+        // Убрали: SaveGameToHistory(result)
+
         if (result == "Draw")
         {
             await DisplayAlertAsync("Viik", "Voori kordus", "OK");
@@ -258,22 +282,31 @@ public partial class TournamentPage : ContentPage
 
         _tournament.RegisterResult(result);
 
-      
         if (_tournament.CurrentPhase == TournamentManager.Phase.Finished)
         {
+            SaveTournamentResult();
+
             await DisplayAlertAsync("Tulemused",
                 $"🥇 {NameOf(_tournament.First)}\n" +
                 $"🥈 {NameOf(_tournament.Second)}\n" +
                 $"🥉 {NameOf(_tournament.Third)}",
                 "OK");
+            ResetBoardTournament();
+            await StartPhase();
             return;
         }
 
         await DisplayAlertAsync("Voor lõppenud", "Järgmine voor algab", "OK");
-
         await StartPhase();
     }
-
+    private void ResetBoardTournament()
+    {
+        foreach (var cell in _cells)
+        {
+            cell.Text = string.Empty;
+            cell.BackgroundColor = Color.FromArgb("#16213e");
+        }
+    }
     private void UpdateStatus(string current)
     {
         _lblCurrentPlayer.Text = $"Käik: {NameOf(current)} ({current})";

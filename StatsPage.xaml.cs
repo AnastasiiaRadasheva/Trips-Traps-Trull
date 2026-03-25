@@ -8,6 +8,8 @@ public partial class StatsPage : ContentPage
     private Label _lblWinsOPvp;
     private Label _lblDrawsPvp;
 
+    private VerticalStackLayout _historyLayout;
+
     private Label _lblWinsXBot;
     private Label _lblWinsOBot;
     private Label _lblDrawsBot;
@@ -142,7 +144,34 @@ public partial class StatsPage : ContentPage
                 Children = { _lblBotGames }
             }
         };
+        var historyTitle = new Label
+        {
+            Text = "Viimased mängud",
+            FontSize = 18,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Colors.White,
+            HorizontalOptions = LayoutOptions.Center
+        };
 
+        _historyLayout = new VerticalStackLayout
+        {
+            Spacing = 6
+        };
+
+        var historyScroll = new ScrollView
+        {
+            HeightRequest = 150, 
+            Content = _historyLayout
+        };
+
+        var historyFrame = new Border
+        {
+            BackgroundColor = Color.FromArgb("#16213e"),
+            StrokeShape = new RoundRectangle { CornerRadius = 12 },
+            Stroke = Color.FromArgb("#e94560"),
+            Padding = new Thickness(20),
+            Content = historyScroll 
+        };
 
         var btnBack = new Button
         {
@@ -166,16 +195,53 @@ public partial class StatsPage : ContentPage
                     title,
                     pvpTitle, pvpFrame, 
                     botStatsTitle, botStatsFrame,
-                    botLevelTitle, botLevelFrame, 
+                    botLevelTitle, botLevelFrame,
+                    historyTitle,
+historyFrame,
                     btnBack
                 }
             }
         };
     }
+    private void LoadHistory()
+    {
+        _historyLayout.Children.Clear();
+
+        string history = Preferences.Get("game_history", "");
+
+        var list = history.Split('|', StringSplitOptions.RemoveEmptyEntries);
+
+        if (list.Length == 0)
+        {
+            _historyLayout.Children.Add(new Label
+            {
+                Text = "Pole veel mänge",
+                TextColor = Colors.Gray,
+                HorizontalOptions = LayoutOptions.Center
+            });
+            return;
+        }
+        foreach (var item in list)
+        {
+            _historyLayout.Children.Add(new Border
+            {
+                BackgroundColor = Color.FromArgb("#0f3460"),
+                StrokeShape = new RoundRectangle { CornerRadius = 10 },
+                Padding = new Thickness(10),
+                Content = new Label
+                {
+                    Text = item,
+                    TextColor = Colors.White,
+                    FontSize = 14
+                }
+            });
+        }
+    }
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        LoadHistory();
         LoadStats();
     }
 
